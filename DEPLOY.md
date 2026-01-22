@@ -1,0 +1,111 @@
+
+# 部署指南 (Deployment Guide)
+
+本项目配置了 Docker 支持，可以轻松部署到任何 Linux 服务器（如 Ubuntu, CentOS, Debian）。
+
+## 1. 准备工作
+
+确保你的服务器已安装 Docker 和 Docker Compose。
+
+```bash
+# Ubuntu 安装 Docker 示例
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose
+```
+
+## 2. 部署步骤
+
+### 方法 A：使用 Docker（推荐）
+
+1. **上传代码**：
+   将项目代码上传到服务器，或者在服务器上 `git clone` 你的仓库。
+
+2. **准备目录和权限**：
+   由于容器内部使用非 root 用户 (UID 1001) 运行，你需要确保挂载的数据目录具有正确的权限。
+
+   ```bash
+   # 进入项目目录
+   cd art_share
+
+   # 创建必要的目录
+   mkdir -p public/uploads
+   mkdir -p prisma
+
+   # 设置权限 (1001 是容器内 nextjs 用户的 ID)
+   sudo chown -R 1001:1001 public/uploads
+   sudo chown -R 1001:1001 prisma
+   ```
+
+   **注意**：如果你想保留本地开发的数据，请将本地的 `prisma/dev.db` 文件同时也上传到服务器的 `prisma/` 目录，并执行 chown。
+
+3. **配置环境变量**：
+   修改 `docker-compose.yml` 中的环境变量，特别是 `AUTH_SECRET`，请务必修改为一个安全的随机字符串。
+
+4. **启动服务**：
+
+   ```bash
+   sudo docker-compose up -d --build
+   ```
+
+5. **初始化/更新数据库**：
+   如果是第一次部署，或者数据库 Schema 发生了变化，需要同步数据库结构。
+   由于我们使用的是 SQLite，且通过 Docker Volume 挂载，我们可以通过临时容器来执行迁移：
+
+   ```bash
+   sudo docker-compose exec web npx prisma db push
+   # 或者如果是第一次且没有 dev.db
+   sudo docker-compose exec web npx prisma db push
+   sudo docker-compose exec web npx tsx prisma/seed.ts  # 如果有种子数据
+   ```
+
+6. **访问**：
+   访问 `http://你的服务器IP:3000`。
+
+### 方法 B：传统 Node.js 部署
+
+如果你不想使用 Docker，可以直接在服务器上运行 Node.js。
+
+1. **安装环境**：
+   需要在服务器上安装 Node.js 18+ 和 NPM。
+
+2. **构建和运行**：
+   ```bash
+   # 安装依赖
+   npm install --production=false # 也可以安装全部依赖用于 build
+   
+   # 初始化数据库
+   npx prisma generate
+   npx prisma db push
+
+   # 构建
+   npm run build
+
+   # 启动 (可以使用 pm2 保持后台运行)
+   npm install -g pm2
+   pm2 start npm --name "art-share" -- start
+   ```
+
+## 3. Nginx 反向代理（可选但推荐）
+
+为了使用域名（如 `artshare.com`）和 HTTPS，建议配置 Nginx 反向代理。
+
+Nginx 配置示例：
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # 防止上传大文件超时
+    client_max_body_size 50M;
+}
+```

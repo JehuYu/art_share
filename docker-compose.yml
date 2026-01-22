@@ -1,0 +1,19 @@
+
+version: '3'
+
+services:
+  web:
+    build: .
+    container_name: art_share
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - AUTH_SECRET=your-production-secret-key
+      - NODE_ENV=production
+    volumes:
+      # Mount the database file/folder to persist data
+      - ./prisma:/app/prisma
+      # Mount public uploads to persist uploaded content
+      - ./public/uploads:/app/public/uploads
