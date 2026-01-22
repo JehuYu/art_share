@@ -10,7 +10,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=file:/app/prisma/dev.db
-      - AUTH_SECRET=your-production-secret-key
+      - AUTH_SECRET=your-super-secret-key-change-in-production
       - NODE_ENV=production
     volumes:
       # Mount the database file/folder to persist data

@@ -24,6 +24,19 @@ export async function POST(request: Request) {
             );
         }
 
+        // Verify user exists in database (防止 JWT 和数据库不同步)
+        const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+        });
+
+        if (!dbUser) {
+            console.error(`User not found in database: ${user.id} (${user.email})`);
+            return NextResponse.json(
+                { error: "用户不存在，请重新登录" },
+                { status: 401 }
+            );
+        }
+
         const formData = await request.formData();
         const title = formData.get("title") as string;
         const description = formData.get("description") as string;
