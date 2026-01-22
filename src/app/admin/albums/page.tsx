@@ -54,7 +54,12 @@ export default function AdminAlbumsPage() {
 
     const fetchAlbums = async () => {
         try {
-            const res = await fetch("/api/admin/albums");
+            const res = await fetch("/api/admin/albums", {
+                cache: "no-store",
+                headers: {
+                    "Cache-Control": "no-cache",
+                },
+            });
             const data = await res.json();
             setAlbums(data.albums || []);
         } catch {
@@ -139,19 +144,28 @@ export default function AdminAlbumsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("确定要删除此轮播图吗？")) return;
+        if (!confirm("确定要删除此轮播图吗？此操作无法撤销。")) return;
+
+        setError("");
+        setSuccess("");
 
         try {
             const res = await fetch(`/api/admin/albums/${id}`, {
                 method: "DELETE",
             });
 
-            if (!res.ok) throw new Error("删除失败");
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "删除失败");
+            }
 
             setSuccess("轮播图已删除");
-            fetchAlbums();
-        } catch {
-            setError("删除失败");
+            await fetchAlbums();
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "删除失败，请重试";
+            setError(errorMessage);
+            console.error("Delete error:", err);
         }
     };
 

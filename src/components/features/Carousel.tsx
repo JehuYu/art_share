@@ -70,14 +70,16 @@ export default function Carousel({ albums, autoPlayInterval = 5000 }: CarouselPr
                         className={`${styles.slide} ${index === currentIndex ? styles.active : ""}`}
                     >
                         <div className={styles.imageWrapper}>
-                            <Image
-                                src={album.cover}
-                                alt={album.title}
-                                fill
-                                priority={index === 0}
-                                sizes="100vw"
-                                style={{ objectFit: "cover" }}
-                            />
+                            {album.cover && album.cover.trim() !== "" ? (
+                                <img
+                                    src={album.cover}
+                                    alt={album.title}
+                                    className={styles.carouselImage}
+                                    loading={index === 0 ? "eager" : "lazy"}
+                                />
+                            ) : (
+                                <div className={styles.placeholderBg} />
+                            )}
                             <div className={styles.overlay} />
                         </div>
                         <div className={styles.content}>

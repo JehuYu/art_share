@@ -47,8 +47,29 @@ async function getPortfolios() {
   }
 }
 
+async function getSystemSettings() {
+  try {
+    const settings = await prisma.systemSettings.findFirst();
+    return settings || {
+      featuredViewMode: "masonry",
+      featuredColumns: 4,
+      featuredMaxRows: 2,
+    };
+  } catch {
+    return {
+      featuredViewMode: "masonry",
+      featuredColumns: 4,
+      featuredMaxRows: 2,
+    };
+  }
+}
+
 export default async function HomePage() {
-  const [albums, portfolios] = await Promise.all([getAlbums(), getPortfolios()]);
+  const [albums, portfolios, settings] = await Promise.all([
+    getAlbums(),
+    getPortfolios(),
+    getSystemSettings(),
+  ]);
 
   return (
     <div className={styles.page}>
@@ -72,7 +93,12 @@ export default async function HomePage() {
               </svg>
             </a>
           </div>
-          <MasonryGrid portfolios={portfolios} />
+          <MasonryGrid
+            portfolios={portfolios}
+            initialViewMode={settings.featuredViewMode as "masonry" | "grid"}
+            initialColumns={settings.featuredColumns}
+            maxRows={settings.featuredMaxRows}
+          />
         </div>
       </section>
 

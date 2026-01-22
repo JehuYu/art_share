@@ -57,6 +57,10 @@ export async function PUT(request: Request) {
                 storageType: data.storageType,
                 localStoragePath: data.localStoragePath,
                 allowRegistration: data.allowRegistration,
+                exploreViewMode: data.exploreViewMode,
+                exploreColumns: data.exploreColumns,
+                featuredViewMode: data.featuredViewMode,
+                featuredColumns: data.featuredColumns,
             },
             create: {
                 id: "default",
@@ -67,6 +71,10 @@ export async function PUT(request: Request) {
                 storageType: data.storageType || "local",
                 localStoragePath: data.localStoragePath || "uploads",
                 allowRegistration: data.allowRegistration ?? true,
+                exploreViewMode: data.exploreViewMode || "masonry",
+                exploreColumns: data.exploreColumns || 4,
+                featuredViewMode: data.featuredViewMode || "masonry",
+                featuredColumns: data.featuredColumns || 4,
             },
         });
 

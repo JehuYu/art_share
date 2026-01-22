@@ -79,11 +79,20 @@
     gap: var(--spacing-sm);
 }
 
-/* Stats */
+/* Stats Row */
+.statsRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+}
+
 .stats {
     display: flex;
     gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
 }
 
 .statItem {
@@ -112,11 +121,40 @@
     color: var(--text-secondary);
 }
 
-/* Content Grid */
+/* Actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.publicToggleCompact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+}
+
+.publicToggleCompact .toggleLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.publicToggleCompact .toggleLabel svg {
+    width: 16px;
+    height: 16px;
+    color: var(--accent);
+}
+
+/* Content - Full Width */
 .content {
-    display: grid;
-    grid-template-columns: 1fr 350px;
-    gap: var(--spacing-xl);
+    display: block;
 }
 
 /* Gallery Section */
@@ -328,55 +366,13 @@
     color: var(--text-muted);
 }
 
-/* Info Panel */
-.infoPanel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-}
-
-.infoCard {
-    background: var(--bg-secondary);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-xl);
-}
-
-.infoCard h3 {
-    font-size: 1rem;
-    margin-bottom: var(--spacing-lg);
-    color: var(--text-secondary);
-}
-
-/* Public Toggle */
-.publicToggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-md);
-    background: var(--glass-bg);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-lg);
-}
-
-.toggleLabel {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.toggleLabel svg {
-    width: 20px;
-    height: 20px;
-    color: var(--accent);
-}
-
+/* Toggle Switch */
 .toggle {
     position: relative;
-    width: 48px;
-    height: 26px;
+    width: 42px;
+    height: 24px;
     background: var(--bg-tertiary);
-    border-radius: 13px;
+    border-radius: 12px;
     cursor: pointer;
     transition: background var(--transition-fast);
 }
@@ -388,8 +384,8 @@
 .toggle::after {
     content: '';
     position: absolute;
-    top: 3px;
-    left: 3px;
+    top: 2px;
+    left: 2px;
     width: 20px;
     height: 20px;
     background: white;
@@ -398,41 +394,43 @@
 }
 
 .toggle.active::after {
-    transform: translateX(22px);
+    transform: translateX(18px);
 }
 
-/* Danger Zone */
-.dangerZone {
-    border-color: rgba(239, 68, 68, 0.3);
+.toggle:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
-.dangerZone h3 {
-    color: var(--error);
-}
-
+/* Delete Button */
 .deleteBtn {
-    width: 100%;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: var(--radius-md);
     color: var(--error);
     font-weight: 500;
+    font-size: 0.875rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     transition: all var(--transition-fast);
+    white-space: nowrap;
 }
 
-.deleteBtn:hover {
+.deleteBtn:hover:not(:disabled) {
     background: var(--error);
     color: white;
 }
 
+.deleteBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .deleteBtn svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Empty State */
@@ -536,18 +534,18 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-    .content {
-        grid-template-columns: 1fr;
+    .statsRow {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    .infoPanel {
-        flex-direction: row;
-        flex-wrap: wrap;
+    .stats {
+        width: 100%;
     }
 
-    .infoCard {
-        flex: 1;
-        min-width: 280px;
+    .actions {
+        width: 100%;
+        justify-content: space-between;
     }
 }
 
@@ -566,7 +564,23 @@
     }
 
     .stats {
-        flex-wrap: wrap;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .statItem {
+        width: 100%;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .publicToggleCompact,
+    .deleteBtn {
+        width: 100%;
+        justify-content: center;
     }
 
     .gallery {

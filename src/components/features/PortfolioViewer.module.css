@@ -113,6 +113,36 @@
     gap: var(--spacing-md);
 }
 
+/* Auto-play Button */
+.autoPlayBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.autoPlayBtn:hover {
+    background: var(--glass-bg-hover);
+    color: var(--text-primary);
+}
+
+.autoPlayBtn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.autoPlayBtn svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* View Toggle */
 .viewToggle {
     display: flex;

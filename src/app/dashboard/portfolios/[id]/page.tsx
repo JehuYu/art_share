@@ -339,48 +339,84 @@ export default function PortfolioEditPage() {
                     </div>
                 )}
 
-                {/* Stats */}
-                <div className={styles.stats}>
-                    <div className={styles.statItem}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <polyline points="21,15 16,10 5,21" />
-                        </svg>
-                        <div>
-                            <div className={styles.statValue}>{portfolio.items.length}</div>
-                            <div className={styles.statLabel}>作品数</div>
-                        </div>
-                    </div>
-                    <div className={styles.statItem}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <div>
-                            <div className={styles.statValue}>{portfolio.viewCount}</div>
-                            <div className={styles.statLabel}>浏览量</div>
-                        </div>
-                    </div>
-                    <div className={styles.statItem}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        <div>
-                            <div className={styles.statValue}>
-                                {new Date(portfolio.createdAt).toLocaleDateString("zh-CN")}
+                {/* Stats + Actions Row */}
+                <div className={styles.statsRow}>
+                    <div className={styles.stats}>
+                        <div className={styles.statItem}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21,15 16,10 5,21" />
+                            </svg>
+                            <div>
+                                <div className={styles.statValue}>{portfolio.items.length}</div>
+                                <div className={styles.statLabel}>作品数</div>
                             </div>
-                            <div className={styles.statLabel}>创建日期</div>
                         </div>
+                        <div className={styles.statItem}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <div>
+                                <div className={styles.statValue}>{portfolio.viewCount}</div>
+                                <div className={styles.statLabel}>浏览量</div>
+                            </div>
+                        </div>
+                        <div className={styles.statItem}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            <div>
+                                <div className={styles.statValue}>
+                                    {new Date(portfolio.createdAt).toLocaleDateString("zh-CN")}
+                                </div>
+                                <div className={styles.statLabel}>创建日期</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.actions}>
+                        {/* Public Toggle */}
+                        {portfolio.status === "APPROVED" && (
+                            <div className={styles.publicToggleCompact}>
+                                <span className={styles.toggleLabel}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="2" y1="12" x2="22" y2="12" />
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                    </svg>
+                                    公开展示
+                                </span>
+                                <button
+                                    className={`${styles.toggle} ${portfolio.isPublic ? styles.active : ""}`}
+                                    onClick={handleTogglePublic}
+                                    disabled={saving}
+                                />
+                            </div>
+                        )}
+
+                        {/* Delete Button */}
+                        <button
+                            className={styles.deleteBtn}
+                            onClick={handleDeletePortfolio}
+                            disabled={deleting}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3,6 5,6 21,6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            {deleting ? "删除中..." : "删除作品集"}
+                        </button>
                     </div>
                 </div>
 
-                {/* Content */}
+                {/* Content - Full Width */}
                 <div className={styles.content}>
-                    {/* Gallery Section */}
+                    {/* Gallery Section - Full Width */}
                     <div className={styles.gallerySection}>
                         <div className={styles.sectionHeader}>
                             <h2 className={styles.sectionTitle}>
@@ -537,52 +573,6 @@ export default function PortfolioEditPage() {
                                 ))}
                             </div>
                         )}
-                    </div>
-
-                    {/* Info Panel */}
-                    <div className={styles.infoPanel}>
-                        {/* Public Toggle */}
-                        {portfolio.status === "APPROVED" && (
-                            <div className={styles.infoCard}>
-                                <h3>公开设置</h3>
-                                <div className={styles.publicToggle}>
-                                    <div className={styles.toggleLabel}>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <circle cx="12" cy="12" r="10" />
-                                            <line x1="2" y1="12" x2="22" y2="12" />
-                                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                                        </svg>
-                                        <span>公开展示</span>
-                                    </div>
-                                    <button
-                                        className={`${styles.toggle} ${portfolio.isPublic ? styles.active : ""}`}
-                                        onClick={handleTogglePublic}
-                                        disabled={saving}
-                                    />
-                                </div>
-                                <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>
-                                    {portfolio.isPublic
-                                        ? "作品集将在首页展示"
-                                        : "作品集仅自己可见"}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Danger Zone */}
-                        <div className={`${styles.infoCard} ${styles.dangerZone}`}>
-                            <h3>危险操作</h3>
-                            <button
-                                className={styles.deleteBtn}
-                                onClick={handleDeletePortfolio}
-                                disabled={deleting}
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="3,6 5,6 21,6" />
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
-                                {deleting ? "删除中..." : "删除作品集"}
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

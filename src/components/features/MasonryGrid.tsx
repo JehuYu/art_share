@@ -8,11 +8,11 @@ import styles from "./MasonryGrid.module.css";
 interface Portfolio {
     id: string;
     title: string;
-    cover?: string;
+    cover?: string | null;
     user: {
         id: string;
         name: string;
-        avatar?: string;
+        avatar?: string | null;
     };
     viewCount: number;
     itemCount?: number;
@@ -21,11 +21,22 @@ interface Portfolio {
 interface MasonryGridProps {
     portfolios: Portfolio[];
     loading?: boolean;
+    initialViewMode?: "masonry" | "grid";
+    initialColumns?: number;
+    showControls?: boolean;
+    maxRows?: number;
 }
 
-export default function MasonryGrid({ portfolios, loading = false }: MasonryGridProps) {
-    const [viewMode, setViewMode] = useState<"grid" | "carousel">("grid");
-    const [columns, setColumns] = useState(4);
+export default function MasonryGrid({
+    portfolios,
+    loading = false,
+    initialViewMode = "masonry",
+    initialColumns = 4,
+    showControls = false,
+    maxRows
+}: MasonryGridProps) {
+    const [viewMode, setViewMode] = useState<"masonry" | "grid">(initialViewMode);
+    const [columns, setColumns] = useState(initialColumns);
     const [userColumns, setUserColumns] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,23 +55,31 @@ export default function MasonryGrid({ portfolios, loading = false }: MasonryGrid
             if (width < 640) setColumns(1);
             else if (width < 768) setColumns(2);
             else if (width < 1024) setColumns(3);
-            else setColumns(4);
+            else setColumns(initialColumns);
         };
 
         updateColumns();
         window.addEventListener("resize", updateColumns);
         return () => window.removeEventListener("resize", updateColumns);
-    }, [userColumns]);
+    }, [userColumns, initialColumns]);
 
     const handleColumnChange = (cols: number) => {
         setUserColumns(cols);
     };
 
-    // Distribute items across columns
+    // Calculate max items based on maxRows
+    const maxItems = maxRows ? maxRows * columns : portfolios.length;
+    const displayPortfolios = portfolios.slice(0, maxItems);
+
+    // Distribute items across columns for masonry view
     const columnItems: Portfolio[][] = Array.from({ length: columns }, () => []);
-    portfolios.forEach((item, index) => {
-        columnItems[index % columns].push(item);
-    });
+
+    if (viewMode === "masonry") {
+        // Simple distribution - alternate columns
+        displayPortfolios.forEach((item, index) => {
+            columnItems[index % columns].push(item);
+        });
+    }
 
     if (loading) {
         return (
@@ -97,9 +116,9 @@ export default function MasonryGrid({ portfolios, loading = false }: MasonryGrid
 
     return (
         <div className={styles.gridContainer}>
-            {/* Controls */}
-            <div className={styles.controls}>
-                {viewMode === "grid" && (
+            {/* Controls - Only shown when showControls is true */}
+            {showControls && (
+                <div className={styles.controls}>
                     <div className={styles.controlGroup}>
                         {[2, 3, 4, 5].map((cols) => (
                             <button
@@ -112,35 +131,37 @@ export default function MasonryGrid({ portfolios, loading = false }: MasonryGrid
                             </button>
                         ))}
                     </div>
-                )}
 
-                <div className={styles.controlGroup}>
-                    <button
-                        className={`${styles.controlBtn} ${viewMode === "grid" ? styles.active : ""}`}
-                        onClick={() => setViewMode("grid")}
-                        title="瀑布流"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="3" width="7" height="7" />
-                            <rect x="14" y="3" width="7" height="7" />
-                            <rect x="14" y="14" width="7" height="7" />
-                            <rect x="3" y="14" width="7" height="7" />
-                        </svg>
-                    </button>
-                    <button
-                        className={`${styles.controlBtn} ${viewMode === "carousel" ? styles.active : ""}`}
-                        onClick={() => setViewMode("carousel")}
-                        title="轮播"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="2" y="6" width="20" height="12" rx="2" />
-                            <path d="M8 6v12M16 6v12" />
-                        </svg>
-                    </button>
+                    <div className={styles.controlGroup}>
+                        <button
+                            className={`${styles.controlBtn} ${viewMode === "masonry" ? styles.active : ""}`}
+                            onClick={() => setViewMode("masonry")}
+                            title="瀑布流"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="7" height="9" />
+                                <rect x="14" y="3" width="7" height="5" />
+                                <rect x="14" y="12" width="7" height="9" />
+                                <rect x="3" y="16" width="7" height="5" />
+                            </svg>
+                        </button>
+                        <button
+                            className={`${styles.controlBtn} ${viewMode === "grid" ? styles.active : ""}`}
+                            onClick={() => setViewMode("grid")}
+                            title="网格"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            {viewMode === "grid" ? (
+            {viewMode === "masonry" ? (
                 <div className={styles.grid} ref={containerRef}>
                     {columnItems.map((column, colIndex) => (
                         <div key={colIndex} className={styles.column}>
@@ -155,24 +176,14 @@ export default function MasonryGrid({ portfolios, loading = false }: MasonryGrid
                     ))}
                 </div>
             ) : (
-                <div
-                    className={styles.grid}
-                    style={{
-                        overflowX: "auto",
-                        paddingBottom: "20px",
-                        scrollSnapType: "x mandatory" // Enable scroll snapping
-                    }}
-                >
-                    {portfolios.map((portfolio) => (
-                        <div
+                <div className={`${styles.grid} ${styles.gridView}`}
+                    style={{ "--columns": columns } as React.CSSProperties}>
+                    {displayPortfolios.map((portfolio, index) => (
+                        <PortfolioItem
                             key={portfolio.id}
-                            style={{
-                                minWidth: "300px",
-                                scrollSnapAlign: "start"
-                            }}
-                        >
-                            <PortfolioItem portfolio={portfolio} />
-                        </div>
+                            portfolio={portfolio}
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                        />
                     ))}
                 </div>
             )}
@@ -189,12 +200,11 @@ function PortfolioItem({ portfolio, style }: { portfolio: Portfolio; style?: Rea
         >
             <div className={styles.imageWrapper}>
                 {portfolio.cover ? (
-                    <Image
+                    <img
                         src={portfolio.cover}
                         alt={portfolio.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
-                        style={{ objectFit: "cover" }}
+                        className={styles.coverImage}
+                        loading="lazy"
                     />
                 ) : (
                     <div className={styles.placeholder}>

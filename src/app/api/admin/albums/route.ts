@@ -38,12 +38,13 @@ export async function POST(request: Request) {
         const description = formData.get("description") as string;
         const link = formData.get("link") as string;
         const coverFile = formData.get("cover") as File | null;
+        const existingCoverUrl = formData.get("coverUrl") as string;
 
         if (!title) {
             return NextResponse.json({ error: "请输入标题" }, { status: 400 });
         }
 
-        let coverUrl = "";
+        let coverUrl = existingCoverUrl || "";
 
         if (coverFile) {
             // Save cover image
@@ -58,6 +59,10 @@ export async function POST(request: Request) {
             await writeFile(filepath, Buffer.from(bytes));
 
             coverUrl = `/uploads/albums/${filename}`;
+        } else if (!coverUrl) {
+            // 如果既没有上传文件也没有现有URL，这是一张轮播图，理应有封面
+            // 但如果目前允许稍后编辑，我们可以允许空，或者返回默认图
+            // 这里为了安全起见保持为空字符，或者我们可以考虑必填校验
         }
 
         // Get max order

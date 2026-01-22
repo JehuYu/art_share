@@ -183,18 +183,34 @@
 .cardCover {
     position: relative;
     width: 100%;
-    min-height: 200px;
+    overflow: hidden;
 }
 
+/* For masonry view - auto height based on image */
 .masonryView .cardCover {
     aspect-ratio: auto;
 }
 
-.cardCover img {
+.masonryView .cardCover img {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+.coverImage {
+    width: 100%;
+    height: auto;
+    display: block;
     transition: transform var(--transition-slow);
 }
 
-.card:hover .cardCover img {
+.gridView .coverImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card:hover .coverImage {
     transform: scale(1.05);
 }
 
@@ -292,13 +308,7 @@
     }
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-    .gallery {
-        --columns: 2 !important;
-    }
-}
-
+/* Responsive - only force smaller columns on very small screens */
 @media (max-width: 640px) {
     .gallery {
         --columns: 1 !important;
@@ -312,5 +322,12 @@
     .viewModeToggle,
     .columnSelector {
         justify-content: center;
+    }
+}
+
+/* Ensure minimum card width for readability */
+@media (max-width: 900px) and (min-width: 641px) {
+    .gallery {
+        --columns: min(var(--columns), 3);
     }
 }

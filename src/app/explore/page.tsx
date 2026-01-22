@@ -22,11 +22,12 @@ interface Portfolio {
 export default function ExplorePage() {
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
-    const [columns, setColumns] = useState(3);
+    const [columns, setColumns] = useState(4);
     const [viewMode, setViewMode] = useState<"grid" | "masonry">("masonry");
 
     useEffect(() => {
         fetchPortfolios();
+        fetchSettings();
     }, []);
 
     const fetchPortfolios = async () => {
@@ -41,6 +42,19 @@ export default function ExplorePage() {
         }
     };
 
+    const fetchSettings = async () => {
+        try {
+            const res = await fetch("/api/settings");
+            if (res.ok) {
+                const data = await res.json();
+                if (data.exploreViewMode) setViewMode(data.exploreViewMode);
+                if (data.exploreColumns) setColumns(data.exploreColumns);
+            }
+        } catch (error) {
+            console.error("Failed to fetch settings:", error);
+        }
+    };
+
     return (
         <div className={styles.page}>
             <div className={styles.container}>
@@ -49,49 +63,6 @@ export default function ExplorePage() {
                     <div className={styles.headerContent}>
                         <h1 className="heading-1">探索作品</h1>
                         <p className={styles.subtitle}>发现来自夏令营学员的精彩创作</p>
-                    </div>
-                </div>
-
-                {/* Controls */}
-                <div className={styles.controls}>
-                    <div className={styles.viewModeToggle}>
-                        <button
-                            className={`${styles.modeBtn} ${viewMode === "masonry" ? styles.active : ""}`}
-                            onClick={() => setViewMode("masonry")}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="7" height="9" />
-                                <rect x="14" y="3" width="7" height="5" />
-                                <rect x="14" y="12" width="7" height="9" />
-                                <rect x="3" y="16" width="7" height="5" />
-                            </svg>
-                            瀑布流
-                        </button>
-                        <button
-                            className={`${styles.modeBtn} ${viewMode === "grid" ? styles.active : ""}`}
-                            onClick={() => setViewMode("grid")}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="7" height="7" />
-                                <rect x="14" y="3" width="7" height="7" />
-                                <rect x="14" y="14" width="7" height="7" />
-                                <rect x="3" y="14" width="7" height="7" />
-                            </svg>
-                            网格
-                        </button>
-                    </div>
-
-                    <div className={styles.columnSelector}>
-                        <span className={styles.columnLabel}>列数:</span>
-                        {[2, 3, 4, 5].map((num) => (
-                            <button
-                                key={num}
-                                className={`${styles.columnBtn} ${columns === num ? styles.active : ""}`}
-                                onClick={() => setColumns(num)}
-                            >
-                                {num}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
@@ -125,12 +96,11 @@ export default function ExplorePage() {
                             >
                                 <div className={styles.cardCover}>
                                     {portfolio.cover ? (
-                                        <Image
+                                        <img
                                             src={portfolio.cover}
                                             alt={portfolio.title}
-                                            fill
-                                            sizes={`(max-width: 768px) 50vw, ${100 / columns}vw`}
-                                            style={{ objectFit: "cover" }}
+                                            loading="lazy"
+                                            className={styles.coverImage}
                                         />
                                     ) : (
                                         <div className={styles.placeholder}>

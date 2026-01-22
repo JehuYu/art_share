@@ -87,6 +87,7 @@ model SystemSettings {
   exploreColumns      Int     @default(4)        // 2-5
   featuredViewMode    String  @default("grid")   // grid, carousel
   featuredColumns     Int     @default(4)        // 2-5
+  featuredMaxRows     Int     @default(2)        // 1-5 最大行数
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

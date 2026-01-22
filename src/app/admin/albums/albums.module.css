@@ -177,7 +177,12 @@
     justify-content: center;
     border-radius: var(--radius-sm);
     color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
     transition: all var(--transition-fast);
+    position: relative;
+    z-index: 10;
 }
 
 .deleteBtn:hover {
@@ -185,9 +190,14 @@
     color: var(--error);
 }
 
+.deleteBtn:active {
+    transform: scale(0.95);
+}
+
 .deleteBtn svg {
     width: 16px;
     height: 16px;
+    pointer-events: none;
 }
 
 /* Cover Upload */

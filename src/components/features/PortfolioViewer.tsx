@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./PortfolioViewer.module.css";
@@ -37,6 +37,8 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("carousel");
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+    const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
     const { items } = portfolio;
 
@@ -65,6 +67,47 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [goToNext, goToPrev]);
+
+    // Auto-play functionality
+    const startAutoPlay = useCallback(() => {
+        if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+        setIsAutoPlaying(true);
+        autoPlayRef.current = setInterval(() => {
+            goToNext();
+        }, 3000); // 3 seconds interval
+    }, [goToNext]);
+
+    const stopAutoPlay = useCallback(() => {
+        if (autoPlayRef.current) {
+            clearInterval(autoPlayRef.current);
+            autoPlayRef.current = null;
+        }
+        setIsAutoPlaying(false);
+    }, []);
+
+    const toggleAutoPlay = useCallback(() => {
+        if (isAutoPlaying) {
+            stopAutoPlay();
+        } else {
+            startAutoPlay();
+        }
+    }, [isAutoPlaying, startAutoPlay, stopAutoPlay]);
+
+    // Clean up auto-play on unmount
+    useEffect(() => {
+        return () => {
+            if (autoPlayRef.current) {
+                clearInterval(autoPlayRef.current);
+            }
+        };
+    }, []);
+
+    // Stop auto-play when switching to album view
+    useEffect(() => {
+        if (viewMode === "album" && isAutoPlaying) {
+            stopAutoPlay();
+        }
+    }, [viewMode, isAutoPlaying, stopAutoPlay]);
 
     const currentItem = items[currentIndex];
 
@@ -109,6 +152,27 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                 </div>
 
                 <div className={styles.headerRight}>
+                    {/* Auto-play Button - Only show in carousel mode */}
+                    {viewMode === "carousel" && items.length > 1 && (
+                        <button
+                            className={`${styles.autoPlayBtn} ${isAutoPlaying ? styles.active : ""}`}
+                            onClick={toggleAutoPlay}
+                            title={isAutoPlaying ? "停止自动播放" : "开始自动播放"}
+                        >
+                            {isAutoPlaying ? (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                                </svg>
+                            ) : (
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5,3 19,12 5,21" />
+                                </svg>
+                            )}
+                            <span>{isAutoPlaying ? "停止" : "自动播放"}</span>
+                        </button>
+                    )}
+
                     {/* View Mode Toggle */}
                     <div className={styles.viewToggle}>
                         <button

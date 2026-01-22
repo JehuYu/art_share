@@ -12,6 +12,11 @@ interface Settings {
     storageType: string;
     localStoragePath: string;
     allowRegistration: boolean;
+    exploreViewMode: string;
+    exploreColumns: number;
+    featuredViewMode: string;
+    featuredColumns: number;
+    featuredMaxRows: number;
 }
 
 export default function AdminSettingsPage() {
@@ -23,6 +28,11 @@ export default function AdminSettingsPage() {
         storageType: "local",
         localStoragePath: "uploads",
         allowRegistration: true,
+        exploreViewMode: "masonry",
+        exploreColumns: 4,
+        featuredViewMode: "masonry",
+        featuredColumns: 4,
+        featuredMaxRows: 2,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -229,6 +239,81 @@ export default function AdminSettingsPage() {
                                     </p>
                                 </div>
                             )}
+                        </div>
+                    </section>
+
+                    {/* Display Settings */}
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>显示设置</h2>
+                        <div className={styles.sectionContent}>
+                            <div className="form-group">
+                                <label className="label">首页精选作品 - 显示模式</label>
+                                <select
+                                    className="input"
+                                    value={settings.featuredViewMode}
+                                    onChange={(e) => setSettings({ ...settings, featuredViewMode: e.target.value })}
+                                >
+                                    <option value="masonry">瀑布流</option>
+                                    <option value="grid">网格</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">首页精选作品 - 列数</label>
+                                <select
+                                    className="input"
+                                    value={settings.featuredColumns}
+                                    onChange={(e) => setSettings({ ...settings, featuredColumns: parseInt(e.target.value) })}
+                                >
+                                    <option value="2">2列</option>
+                                    <option value="3">3列</option>
+                                    <option value="4">4列</option>
+                                    <option value="5">5列</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">首页精选作品 - 最大行数</label>
+                                <select
+                                    className="input"
+                                    value={settings.featuredMaxRows}
+                                    onChange={(e) => setSettings({ ...settings, featuredMaxRows: parseInt(e.target.value) })}
+                                >
+                                    <option value="1">1行</option>
+                                    <option value="2">2行</option>
+                                    <option value="3">3行</option>
+                                    <option value="4">4行</option>
+                                    <option value="5">5行</option>
+                                </select>
+                                <p className={styles.hint}>限制首页精选作品显示的最大行数</p>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">探索页面 - 显示模式</label>
+                                <select
+                                    className="input"
+                                    value={settings.exploreViewMode}
+                                    onChange={(e) => setSettings({ ...settings, exploreViewMode: e.target.value })}
+                                >
+                                    <option value="masonry">瀑布流</option>
+                                    <option value="grid">网格</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">探索页面 - 列数</label>
+                                <select
+                                    className="input"
+                                    value={settings.exploreColumns}
+                                    onChange={(e) => setSettings({ ...settings, exploreColumns: parseInt(e.target.value) })}
+                                >
+                                    <option value="2">2列</option>
+                                    <option value="3">3列</option>
+                                    <option value="4">4列</option>
+                                    <option value="5">5列</option>
+                                </select>
+                                <p className={styles.hint}>用户仍可在前端手动调整显示方式</p>
+                            </div>
                         </div>
                     </section>
 

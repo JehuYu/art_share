@@ -53,6 +53,12 @@
     gap: var(--spacing-lg);
 }
 
+.grid.gridView {
+    display: grid;
+    grid-template-columns: repeat(var(--columns, 4), 1fr);
+    gap: var(--spacing-lg);
+}
+
 .column {
     flex: 1;
     display: flex;
@@ -77,19 +83,34 @@
     box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
 
-/* Image */
+/* Image - Auto height for masonry */
 .imageWrapper {
     position: relative;
-    aspect-ratio: 3/4;
+    width: 100%;
     overflow: hidden;
 }
 
-.imageWrapper img {
+/* Cover image auto size */
+.coverImage {
+    width: 100%;
+    height: auto;
+    display: block;
     transition: transform var(--transition-slow);
 }
 
-.item:hover .imageWrapper img {
+.item:hover .coverImage {
     transform: scale(1.05);
+}
+
+/* For grid view, use fixed aspect ratio */
+.gridView .imageWrapper {
+    aspect-ratio: 4 / 3;
+}
+
+.gridView .coverImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .placeholder {

@@ -101,6 +101,7 @@ export async function DELETE(_request: Request, { params }: Props) {
         return NextResponse.json({ message: "轮播图已删除" });
     } catch (error) {
         console.error("Delete album error:", error);
-        return NextResponse.json({ error: "删除失败" }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : "未知错误";
+        return NextResponse.json({ error: `删除失败: ${errorMessage}` }, { status: 500 });
     }
 }
