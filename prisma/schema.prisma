@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户模型
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  password      String
+  name          String
+  avatar        String?
+  role          String      @default("USER") // USER, ADMIN
+  portfolios    Portfolio[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// 作品集模型
+model Portfolio {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  cover       String?
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       PortfolioItem[]
+  status      String          @default("PENDING") // PENDING, APPROVED, REJECTED
+  isPublic    Boolean         @default(false)
+  viewCount   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// 作品集项目（图片/视频）
+model PortfolioItem {
+  id              String    @id @default(cuid())
+  type            String    // IMAGE, VIDEO
+  url             String
+  thumbnail       String?
+  title           String?
+  originalName    String?   // 原始文件名
+  order           Int       @default(0)
+  portfolioId     String
+  portfolio       Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+
+  @@index([portfolioId])
+}
+
+// 轮播图相册
+model Album {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  cover       String
+  link        String?  // 点击跳转链接
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 系统设置
+model SystemSettings {
+  id                  String  @id @default("default")
+  siteName            String  @default("Art Share")
+  siteDescription     String? @default("夏令营作品展示平台")
+  requireApproval     Boolean @default(true)  // 审核开关
+  maxFileSize         Int     @default(52428800) // 50MB in bytes
+  storageType         String  @default("local") // local, cloud
+  localStoragePath    String  @default("uploads")
+  cloudStorageConfig  String? // JSON格式的云存储配置
+  allowRegistration   Boolean @default(true)
+  // 显示设置
+  exploreViewMode     String  @default("grid")   // grid, carousel
+  exploreColumns      Int     @default(4)        // 2-5
+  featuredViewMode    String  @default("grid")   // grid, carousel
+  featuredColumns     Int     @default(4)        // 2-5
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// 精选作品
+model FeaturedPortfolio {
+  id          String    @id @default(cuid())
+  portfolioId String    @unique
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+

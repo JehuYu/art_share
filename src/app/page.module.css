@@ -1,0 +1,202 @@
+.page {
+    min-height: 100vh;
+    padding-top: 72px;
+    /* Header height */
+}
+
+/* Hero / Carousel */
+.hero {
+    margin-bottom: var(--spacing-3xl);
+}
+
+/* Featured Section */
+.featured {
+    padding: var(--spacing-2xl) 0;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.sectionTitle h2 {
+    margin-bottom: var(--spacing-xs);
+}
+
+.sectionSubtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.sectionHeader .btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.sectionHeader .btn svg {
+    transition: transform var(--transition-fast);
+}
+
+.sectionHeader .btn:hover svg {
+    transform: translateX(4px);
+}
+
+/* CTA Section */
+.cta {
+    padding: var(--spacing-3xl) 0;
+}
+
+.ctaCard {
+    position: relative;
+    padding: var(--spacing-3xl);
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+}
+
+.ctaContent {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+}
+
+.ctaContent h2 {
+    margin-bottom: var(--spacing-md);
+}
+
+.ctaContent p {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+    margin-bottom: var(--spacing-xl);
+}
+
+.ctaButtons {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.ctaDecor {
+    position: absolute;
+    right: -100px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.decorCircle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), transparent);
+    opacity: 0.1;
+}
+
+.decorCircle:nth-child(1) {
+    width: 300px;
+    height: 300px;
+    right: 0;
+    top: -150px;
+}
+
+.decorCircle:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    right: 100px;
+    top: 0;
+    opacity: 0.15;
+}
+
+.decorCircle:nth-child(3) {
+    width: 150px;
+    height: 150px;
+    right: 50px;
+    top: 100px;
+    opacity: 0.2;
+}
+
+/* Footer */
+.footer {
+    padding: var(--spacing-xl) 0;
+    border-top: 1px solid var(--glass-border);
+    background: var(--bg-secondary);
+}
+
+.footerContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.footerBrand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.logoIcon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    border-radius: var(--radius-sm);
+    color: white;
+}
+
+.logoIcon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.copyright {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page {
+        padding-top: 64px;
+    }
+
+    .sectionHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .ctaCard {
+        padding: var(--spacing-xl);
+    }
+
+    .ctaContent p {
+        font-size: 1rem;
+    }
+
+    .ctaButtons {
+        flex-direction: column;
+    }
+
+    .ctaButtons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ctaDecor {
+        display: none;
+    }
+
+    .footerContent {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+}

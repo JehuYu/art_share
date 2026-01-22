@@ -1,0 +1,31 @@
+.page {
+    min-height: 100vh;
+    padding-top: 72px;
+}
+
+.previewBanner {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(234, 88, 12, 0.95));
+    color: white;
+    font-weight: 500;
+    font-size: 0.875rem;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.previewBanner svg {
+    flex-shrink: 0;
+}
+
+.previewBanner + div {
+    margin-top: 48px;
+}

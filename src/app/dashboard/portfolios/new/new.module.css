@@ -1,0 +1,255 @@
+.page {
+    min-height: 100vh;
+    padding-top: 72px;
+    padding-bottom: var(--spacing-2xl);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+.header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-md);
+    transition: color var(--transition-fast);
+}
+
+.backLink:hover {
+    color: var(--text-primary);
+}
+
+.backLink svg {
+    width: 18px;
+    height: 18px;
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--error);
+    font-size: 0.875rem;
+}
+
+.error svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.form {
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.formSection {
+    display: flex;
+    flex-direction: column;
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Upload */
+.uploadArea {
+    margin-bottom: var(--spacing-lg);
+}
+
+.fileInput {
+    display: none;
+}
+
+.uploadLabel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl);
+    background: var(--glass-bg);
+    border: 2px dashed var(--glass-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.uploadLabel:hover,
+.uploadArea.dragOver .uploadLabel {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+.uploadArea.dragOver .uploadLabel {
+    transform: scale(1.02);
+}
+
+.uploadLabel svg {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+.uploadLabel span {
+    color: var(--text-secondary);
+}
+
+.uploadHint {
+    font-size: 0.8125rem;
+    color: var(--text-muted) !important;
+    margin-top: var(--spacing-xs);
+}
+
+/* File List */
+.fileList {
+    margin-top: var(--spacing-lg);
+}
+
+.fileListTitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.fileGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.fileItem {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.fileItem:hover {
+    border-color: var(--glass-border-hover);
+}
+
+.fileItem.isCover {
+    border-color: var(--accent);
+}
+
+.fileItem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.videoPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-elevated));
+    gap: var(--spacing-xs);
+}
+
+.videoPlaceholder svg {
+    width: 32px;
+    height: 32px;
+    color: var(--accent);
+}
+
+.videoPlaceholder span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.coverBadge {
+    position: absolute;
+    bottom: var(--spacing-xs);
+    left: var(--spacing-xs);
+    padding: 2px 8px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: white;
+}
+
+.removeBtn {
+    position: absolute;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.fileItem:hover .removeBtn {
+    opacity: 1;
+}
+
+.removeBtn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--glass-border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .formGrid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .fileGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
