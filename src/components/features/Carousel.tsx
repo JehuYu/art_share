@@ -8,9 +8,9 @@ import styles from "./Carousel.module.css";
 interface Album {
     id: string;
     title: string;
-    description?: string;
+    description?: string | null;
     cover: string;
-    link?: string;
+    link?: string | null;
 }
 
 interface CarouselProps {
