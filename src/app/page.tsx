@@ -1,6 +1,7 @@
 import Carousel from "@/components/features/Carousel";
 import MasonryGrid from "@/components/features/MasonryGrid";
 import prisma from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth-utils";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -70,10 +71,11 @@ async function getSystemSettings() {
 }
 
 export default async function HomePage() {
-  const [albums, portfolios, settings] = await Promise.all([
+  const [albums, portfolios, settings, currentUser] = await Promise.all([
     getAlbums(),
     getPortfolios(),
     getSystemSettings(),
+    getAuthUser(),
   ]);
 
   return (
@@ -112,16 +114,33 @@ export default async function HomePage() {
         <div className="container">
           <div className={styles.ctaCard}>
             <div className={styles.ctaContent}>
-              <h2 className="heading-2">展示你的作品</h2>
-              <p>加入我们，分享你在夏令营中的精彩创作，与更多人分享你的才华与创意。</p>
-              <div className={styles.ctaButtons}>
-                <a href="/register" className="btn btn-primary btn-lg">
-                  立即注册
-                </a>
-                <a href="/login" className="btn btn-secondary btn-lg">
-                  已有账号？登录
-                </a>
-              </div>
+              {currentUser ? (
+                <>
+                  <h2 className="heading-2">继续你的创作</h2>
+                  <p>欢迎回来，{currentUser.name}！进入个人中心管理你的作品集，或探索更多精彩创作。</p>
+                  <div className={styles.ctaButtons}>
+                    <a href="/dashboard" className="btn btn-primary btn-lg">
+                      个人中心
+                    </a>
+                    <a href="/explore" className="btn btn-secondary btn-lg">
+                      探索更多作品
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="heading-2">展示你的作品</h2>
+                  <p>加入我们，分享你在夏令营中的精彩创作，与更多人分享你的才华与创意。</p>
+                  <div className={styles.ctaButtons}>
+                    <a href="/register" className="btn btn-primary btn-lg">
+                      立即注册
+                    </a>
+                    <a href="/login" className="btn btn-secondary btn-lg">
+                      已有账号？登录
+                    </a>
+                  </div>
+                </>
+              )}
             </div>
             <div className={styles.ctaDecor}>
               <div className={styles.decorCircle}></div>

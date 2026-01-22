@@ -61,6 +61,7 @@ export async function PUT(request: Request) {
                 exploreColumns: data.exploreColumns,
                 featuredViewMode: data.featuredViewMode,
                 featuredColumns: data.featuredColumns,
+                featuredMaxRows: data.featuredMaxRows,
             },
             create: {
                 id: "default",
@@ -75,6 +76,7 @@ export async function PUT(request: Request) {
                 exploreColumns: data.exploreColumns || 4,
                 featuredViewMode: data.featuredViewMode || "masonry",
                 featuredColumns: data.featuredColumns || 4,
+                featuredMaxRows: data.featuredMaxRows || 2,
             },
         });
 

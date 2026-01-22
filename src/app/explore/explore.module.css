@@ -325,9 +325,23 @@
     }
 }
 
-/* Ensure minimum card width for readability */
-@media (max-width: 900px) and (min-width: 641px) {
+/* For tablets, limit to 2 columns */
+@media (max-width: 768px) and (min-width: 641px) {
+    .gallery {
+        --columns: 2 !important;
+    }
+}
+
+/* For medium screens, limit to 3 columns */
+@media (max-width: 1024px) and (min-width: 769px) {
     .gallery {
         --columns: min(var(--columns), 3);
+    }
+}
+
+/* For larger screens (1025px-1400px), limit to 4 columns */
+@media (max-width: 1400px) and (min-width: 1025px) {
+    .gallery {
+        --columns: min(var(--columns), 4);
     }
 }
