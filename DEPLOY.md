@@ -48,20 +48,22 @@ sudo apt-get install -y docker.io docker-compose
    ```bash
    sudo docker-compose up -d --build
    ```
+   *根据服务器性能，首次构建可能需要几分钟。*
 
-5. **初始化/更新数据库**：
-   如果是第一次部署，或者数据库 Schema 发生了变化，需要同步数据库结构。
-   由于我们使用的是 SQLite，且通过 Docker Volume 挂载，我们可以通过临时容器来执行迁移：
-
+5. **初始化完成**：
+   容器启动时会自动检测并执行数据库迁移和初始化（包含创建管理员账号）。
+   
+   你可以通过查看日志来确认：
    ```bash
-   sudo docker-compose exec web npx prisma db push
-   # 或者如果是第一次且没有 dev.db
-   sudo docker-compose exec web npx prisma db push
-   sudo docker-compose exec web npx tsx prisma/seed.ts  # 如果有种子数据
+   sudo docker-compose logs -f
    ```
+   如果看到 "Starting Next.js server..."，说明服务已就绪。
 
 6. **访问**：
    访问 `http://你的服务器IP:3000`。
+   
+   **默认账号**: `admin@artshare.com`
+   **默认密码**: `admin123`
 
 ### 方法 B：传统 Node.js 部署
 

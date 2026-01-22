@@ -1,13 +1,11 @@
 
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
 RUN npm ci
 
@@ -17,14 +15,22 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+# Environment variables for build time
 ENV NEXT_TELEMETRY_DISABLED 1
+# Use a template DB file for build-time initialization
+ENV DATABASE_URL="file:/app/template.db"
 
-# Generate Prisma Client
+# 1. Generate Client
 RUN npx prisma generate
 
+# 2. Initialize DB file (Create structure)
+RUN npx prisma db push
+
+# 3. Seed data (Create admin)
+# We use tsx directly here since we have dev dependencies in the builder stage
+RUN npx tsx prisma/seed.ts
+
+# 4. Build Next.js app
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -37,29 +43,34 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copy public assets
 COPY --from=builder /app/public ./public
 
-# Set the correct permission for prerender cache
+# Set permissions
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# Copy standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Prisma schema and the PRE-BUILT template database
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/template.db ./template.db
+
+# Ensure openssl is installed in runner for Prisma Client
+RUN apk add --no-cache openssl
 
 USER nextjs
 
 EXPOSE 3000
 
 ENV PORT 3000
-# set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 
-# We start with a shell script to ensure db exists if using sqlite
-# But for simplicity, we just run the server. DB migrations should be handled carefully.
-# If using SQLite, we need to ensure the directory is writable.
-# Since we copy prisma folder, it should be fine if we mount the db file.
+# Startup Logic:
+# 1. Check if the volume-mounted DB exists (prisma/dev.db)
+# 2. If not, copy our pre-built 'template.db' to 'prisma/dev.db'
+# 3. Start server
+CMD ["/bin/sh", "-c", "if [ ! -f prisma/dev.db ]; then echo 'Initializing fresh database...'; cp template.db prisma/dev.db; fi && node server.js"]
 
-CMD ["node", "server.js"]
