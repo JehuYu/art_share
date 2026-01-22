@@ -1,9 +1,11 @@
 
 FROM node:20-alpine AS base
+# Install common dependencies needed for both build and runtime
+# openssl is required for Prisma, libc6-compat for some native modules
+RUN apk add --no-cache libc6-compat openssl
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -27,7 +29,6 @@ RUN npx prisma generate
 RUN npx prisma db push
 
 # 3. Seed data (Create admin)
-# We use tsx directly here since we have dev dependencies in the builder stage
 RUN npx tsx prisma/seed.ts
 
 # 4. Build Next.js app
@@ -58,8 +59,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/template.db ./template.db
 
-# Ensure openssl is installed in runner for Prisma Client
-RUN apk add --no-cache openssl
+# (openssl is already in base)
 
 USER nextjs
 
