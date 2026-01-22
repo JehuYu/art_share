@@ -3,6 +3,8 @@ import MasonryGrid from "@/components/features/MasonryGrid";
 import prisma from "@/lib/prisma";
 import styles from "./page.module.css";
 
+export const dynamic = "force-dynamic";
+
 async function getAlbums() {
   try {
     const albums = await prisma.album.findMany({
@@ -10,7 +12,8 @@ async function getAlbums() {
       orderBy: { order: "asc" },
     });
     return albums;
-  } catch {
+  } catch (error) {
+    console.error("Fetch albums error:", error);
     return [];
   }
 }
@@ -42,7 +45,8 @@ async function getPortfolios() {
       ...p,
       itemCount: p._count.items,
     }));
-  } catch {
+  } catch (error) {
+    console.error("Fetch portfolios error:", error);
     return [];
   }
 }
@@ -55,7 +59,8 @@ async function getSystemSettings() {
       featuredColumns: 4,
       featuredMaxRows: 2,
     };
-  } catch {
+  } catch (error) {
+    console.error("Fetch settings error:", error);
     return {
       featuredViewMode: "masonry",
       featuredColumns: 4,
