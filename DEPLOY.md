@@ -36,7 +36,9 @@ sudo apt-get install -y docker.io docker-compose
    sudo chown -R 1001:1001 prisma
    ```
 
-   **注意**：如果你想保留本地开发的数据，请将本地的 `prisma/dev.db` 文件同时也上传到服务器的 `prisma/` 目录，并执行 chown。
+   **注意**：
+   - **全新部署（推荐）**：请**不要**上传本地的 `prisma/dev.db` 文件。服务器会在首次启动时自动创建一个空的数据库。
+   - **保留数据**：如果你确实想保留本地开发的数据，可以将本地的 `prisma/dev.db` 文件上传到服务器的 `prisma/` 目录。
 
 3. **配置环境变量**：
    修改 `docker-compose.yml` 中的环境变量，特别是 `AUTH_SECRET`，请务必修改为一个安全的随机字符串。

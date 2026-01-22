@@ -20,19 +20,9 @@ async function main() {
     });
     console.log(`Created admin user: ${admin.email}`);
 
-    // Create demo user
-    const userPassword = await hash("user123", 12);
-    const user = await prisma.user.upsert({
-        where: { email: "user@artshare.com" },
-        update: {},
-        create: {
-            email: "user@artshare.com",
-            name: "演示用户",
-            password: userPassword,
-            role: "USER",
-        },
-    });
-    console.log(`Created demo user: ${user.email}`);
+    // Demo user creation removed for production deployment
+    // const userPassword = await hash("user123", 12);
+    // ...
 
     // Create default system settings
     await prisma.systemSettings.upsert({
@@ -54,7 +44,6 @@ async function main() {
     console.log("Seeding completed!");
     console.log("\n=== 默认账号 ===");
     console.log("管理员: admin@artshare.com / admin123");
-    console.log("普通用户: user@artshare.com / user123");
 }
 
 main()
