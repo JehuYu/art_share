@@ -18,10 +18,13 @@ export async function getAuthUser(): Promise<AuthUser | null> {
         const token = cookieStore.get("auth-token");
 
         if (!token?.value) {
+            console.log("[Auth] No auth-token cookie found");
             return null;
         }
 
+        console.log("[Auth] Token found, verifying...");
         const { payload } = await jwtVerify(token.value, JWT_SECRET);
+        console.log("[Auth] Token verified for user:", payload.email);
 
         return {
             id: payload.id as string,
@@ -29,7 +32,8 @@ export async function getAuthUser(): Promise<AuthUser | null> {
             email: payload.email as string,
             role: payload.role as string,
         };
-    } catch {
+    } catch (error) {
+        console.error("[Auth] Token verification failed:", error);
         return null;
     }
 }
