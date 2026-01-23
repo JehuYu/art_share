@@ -20,17 +20,19 @@ export async function GET(request: Request) {
     }
 }
 
-// POST - Logout via API call
-export async function POST() {
+// POST - Logout via API call | Form submission
+export async function POST(request: Request) {
     try {
         const cookieStore = await cookies();
 
         // Clear the auth token cookie
         cookieStore.delete("auth-token");
 
-        return NextResponse.json({ message: "注销成功" });
+        // 如果是表单提交，重定向其到首页
+        const url = new URL(request.url);
+        return NextResponse.redirect(new URL("/", url.origin));
     } catch (error) {
         console.error("Logout error:", error);
-        return NextResponse.json({ error: "注销失败" }, { status: 500 });
+        return NextResponse.redirect(new URL("/", request.url));
     }
 }
