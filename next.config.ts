@@ -64,6 +64,17 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // URL 重写配置（替代 middleware）
+  async rewrites() {
+    return [
+      {
+        // 将 /uploads/* 重写到 /api/uploads/* 接口
+        source: "/uploads/:path*",
+        destination: "/api/uploads/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
