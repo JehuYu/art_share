@@ -54,10 +54,14 @@ export async function POST(request: Request) {
             .sign(JWT_SECRET);
 
         // Set cookie
+        // 为了最大限度兼容各种 HTTPS 代理和端口配置，暂时禁用 Secure 限制
+        // Secure: false 意味着 Cookie 可以在 HTTP 和 HTTPS 下工作
+        // SameSite: lax 是现代浏览器默认值，支持正常的页面导航
         const cookieStore = await cookies();
         cookieStore.set("auth-token", token, {
             httpOnly: true,
-            secure: false, // 允许 HTTP
+            secure: false,
+            sameSite: "lax",
             path: "/",
             maxAge: 60 * 60 * 24 * 7, // 7 days
         });
