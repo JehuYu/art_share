@@ -1,10 +1,6 @@
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
-);
-
 export interface AuthUser {
     id: string;
     name: string;
@@ -14,6 +10,10 @@ export interface AuthUser {
 
 export async function getAuthUser(): Promise<AuthUser | null> {
     try {
+        const JWT_SECRET = new TextEncoder().encode(
+            process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
+        );
+
         const cookieStore = await cookies();
         const token = cookieStore.get("auth-token");
 

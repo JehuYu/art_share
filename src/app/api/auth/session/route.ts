@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
-);
-
 export async function GET() {
     try {
+        const JWT_SECRET = new TextEncoder().encode(
+            process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
+        );
+
         const cookieStore = await cookies();
         const token = cookieStore.get("auth-token");
 

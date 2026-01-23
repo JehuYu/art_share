@@ -4,12 +4,12 @@ import { SignJWT } from "jose";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
-);
-
 export async function POST(request: Request) {
     try {
+        const JWT_SECRET = new TextEncoder().encode(
+            process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
+        );
+
         const { email, password } = await request.json();
 
         // Validate input
