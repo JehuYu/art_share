@@ -15,7 +15,7 @@ services:
       # Database configuration
       - DATABASE_URL=file:/app/prisma/dev.db
       # AUTH_SECRET: 用于 JWT 签名
-      - AUTH_SECRET=${AUTH_SECRET:-art-share-jwt-secret-2026}
+      - AUTH_SECRET=art-share-jwt-secret-2026
       - NODE_ENV=production
     volumes:
       # Persist database
