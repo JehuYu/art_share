@@ -1,38 +1,58 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
-// GET - Logout via link (redirect to home)
+/**
+ * 获取实际的来源 URL（支持反向代理）
+ */
+async function getOriginUrl(request: Request): Promise<string> {
+    const headersList = await headers();
+
+    // 优先使用 X-Forwarded 头（反向代理场景）
+    const forwardedProto = headersList.get("x-forwarded-proto");
+    const forwardedHost = headersList.get("x-forwarded-host");
+
+    if (forwardedHost) {
+        const proto = forwardedProto || "https";
+        return `${proto}://${forwardedHost}`;
+    }
+
+    // 使用 Host 头
+    const host = headersList.get("host");
+    if (host) {
+        // 判断协议
+        const proto = host.includes("localhost") ? "http" : "https";
+        return `${proto}://${host}`;
+    }
+
+    // 最后回退到 request.url
+    const url = new URL(request.url);
+    return url.origin;
+}
+
 // GET - Logout via link (redirect to home)
 export async function GET(request: Request) {
     try {
         const cookieStore = await cookies();
-
-        // Clear the auth token cookie
         cookieStore.delete("auth-token");
 
-        // Redirect to home page dynamicall
-        const url = new URL(request.url);
-        return NextResponse.redirect(new URL("/", url.origin));
+        const origin = await getOriginUrl(request);
+        return NextResponse.redirect(`${origin}/`, { status: 302 });
     } catch (error) {
         console.error("Logout error:", error);
-        // Fallback
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect("/", { status: 302 });
     }
 }
 
-// POST - Logout via API call | Form submission
+// POST - Logout via form submission
 export async function POST(request: Request) {
     try {
         const cookieStore = await cookies();
-
-        // Clear the auth token cookie
         cookieStore.delete("auth-token");
 
-        // 如果是表单提交，重定向其到首页
-        const url = new URL(request.url);
-        return NextResponse.redirect(new URL("/", url.origin));
+        const origin = await getOriginUrl(request);
+        return NextResponse.redirect(`${origin}/`, { status: 302 });
     } catch (error) {
         console.error("Logout error:", error);
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect("/", { status: 302 });
     }
 }
