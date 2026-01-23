@@ -31,9 +31,9 @@ export async function getAuthUser(): Promise<AuthUser | null> {
             return null;
         }
 
-        console.log("[Auth] Token found, verifying...");
+
         const { payload } = await jwtVerify(token.value, JWT_SECRET);
-        console.log("[Auth] Token verified for user:", payload.email);
+
 
         return {
             id: payload.id as string,

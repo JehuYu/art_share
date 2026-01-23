@@ -102,7 +102,7 @@ export async function PATCH(
         }
 
         const body = await request.json();
-        console.log(`[PATCH] Updating portfolio ${id}:`, body);
+
         const { title, description, cover, isPublic } = body;
 
         const updateData: Record<string, unknown> = {};
@@ -139,6 +139,22 @@ export async function PATCH(
                 },
             },
         });
+
+        // Sync with linked albums if title, description or cover changed
+        if (title !== undefined || description !== undefined || cover !== undefined) {
+            const portfolioUrl = `/portfolio/${id}`;
+            const albumUpdateData: Record<string, unknown> = {};
+            if (title !== undefined) albumUpdateData.title = title;
+            if (description !== undefined) albumUpdateData.description = description || null;
+            if (cover !== undefined) albumUpdateData.cover = cover;
+
+            await prisma.album.updateMany({
+                where: {
+                    link: portfolioUrl,
+                },
+                data: albumUpdateData,
+            });
+        }
 
         return NextResponse.json(updated);
     } catch (error) {
@@ -192,6 +208,22 @@ export async function DELETE(
             );
         }
 
+        // Check if portfolio is used in active carousel before deleting
+        const portfolioUrl = `/portfolio/${id}`;
+        const linkedAlbum = await prisma.album.findFirst({
+            where: {
+                link: portfolioUrl,
+                isActive: true,
+            },
+        });
+
+        if (linkedAlbum) {
+            return NextResponse.json(
+                { error: "无法删除：该作品集当前正在首页轮播展示，请先联系管理员移除相关轮播图" },
+                { status: 400 }
+            );
+        }
+
         // 导入文件清理工具
         const { deleteFile } = await import("@/lib/storage");
 
@@ -209,13 +241,6 @@ export async function DELETE(
         // Delete from featured if exists
         await prisma.featuredPortfolio.deleteMany({
             where: { portfolioId: id },
-        });
-
-        // Delete albums that link to this portfolio
-        await prisma.album.deleteMany({
-            where: {
-                link: `/portfolio/${id}`,
-            },
         });
 
         // Delete associated portfolio items

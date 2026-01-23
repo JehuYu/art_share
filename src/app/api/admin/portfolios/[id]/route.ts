@@ -46,6 +46,22 @@ export async function PATCH(request: Request, { params }: Props) {
 
         // Handle isPublic toggle
         if (typeof isPublic === "boolean") {
+            if (isPublic === false) {
+                const portfolioUrl = `/portfolio/${id}`;
+                const linkedAlbum = await prisma.album.findFirst({
+                    where: {
+                        link: portfolioUrl,
+                        isActive: true,
+                    },
+                });
+
+                if (linkedAlbum) {
+                    return NextResponse.json(
+                        { error: "无法设为私密：该作品已被设为首页轮播展示，请先移除轮播图" },
+                        { status: 400 }
+                    );
+                }
+            }
             updateData.isPublic = isPublic;
         }
 
@@ -57,6 +73,21 @@ export async function PATCH(request: Request, { params }: Props) {
             where: { id },
             data: updateData,
         });
+
+        // Sync with linked albums if title or description changed
+        if (title !== undefined || description !== undefined) {
+            const portfolioUrl = `/portfolio/${id}`;
+            const albumUpdateData: Record<string, unknown> = {};
+            if (title !== undefined) albumUpdateData.title = title;
+            if (description !== undefined) albumUpdateData.description = description || null;
+
+            await prisma.album.updateMany({
+                where: {
+                    link: portfolioUrl,
+                },
+                data: albumUpdateData,
+            });
+        }
 
         return NextResponse.json({ message: "已更新" });
     } catch (error) {
@@ -75,16 +106,43 @@ export async function DELETE(_request: Request, { params }: Props) {
             return NextResponse.json({ error: "无权访问" }, { status: 403 });
         }
 
+        // Check if portfolio is used in active carousel before deleting
+        const portfolioUrl = `/portfolio/${id}`;
+        const linkedAlbum = await prisma.album.findFirst({
+            where: {
+                link: portfolioUrl,
+                isActive: true,
+            },
+        });
+
+        if (linkedAlbum) {
+            return NextResponse.json(
+                { error: "无法删除：该作品集当前正在首页轮播展示，请先移除相关轮播图" },
+                { status: 400 }
+            );
+        }
+
+        // 获取所有要删除的作品的文件路径
+        const portfolioItems = await prisma.portfolioItem.findMany({
+            where: { portfolioId: id },
+            select: { url: true, thumbnail: true },
+        });
+
+        // 导入文件清理工具
+        const { deleteFile } = await import("@/lib/storage");
+
+        // 清理物理文件（异步执行，不阻塞响应）
+        const fileCleanupPromises = portfolioItems.map(async (item) => {
+            await deleteFile(item.url);
+            if (item.thumbnail) {
+                await deleteFile(item.thumbnail);
+            }
+        });
+        Promise.allSettled(fileCleanupPromises).catch(console.error);
+
         // First delete from featured if exists
         await prisma.featuredPortfolio.deleteMany({
             where: { portfolioId: id },
-        });
-
-        // Delete albums that link to this portfolio
-        await prisma.album.deleteMany({
-            where: {
-                link: `/portfolio/${id}`,
-            },
         });
 
         // Delete associated portfolio items

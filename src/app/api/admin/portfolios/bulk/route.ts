@@ -79,6 +79,24 @@ export async function DELETE(request: Request) {
             );
         }
 
+        // Check if any of these portfolios are used in active carousel
+        const portfolioUrls = ids.map(id => `/portfolio/${id}`);
+        const activeLinkedAlbums = await prisma.album.findMany({
+            where: {
+                link: { in: portfolioUrls },
+                isActive: true,
+            },
+            select: { title: true }
+        });
+
+        if (activeLinkedAlbums.length > 0) {
+            const albumTitles = activeLinkedAlbums.map(a => a.title).join("、");
+            return NextResponse.json(
+                { error: `无法删除：选中的作品集中有 ${activeLinkedAlbums.length} 个正在首页轮播展示 (${albumTitles})，请先移除相关轮播图` },
+                { status: 400 }
+            );
+        }
+
         // 获取所有要删除的作品的文件路径
         const portfolioItems = await prisma.portfolioItem.findMany({
             where: { portfolioId: { in: ids } },
@@ -104,11 +122,11 @@ export async function DELETE(request: Request) {
             },
         });
 
-        // Delete albums that link to any of these portfolios
-        const portfolioUrls = ids.map(id => `/portfolio/${id}`);
+        // Delete albums that are NOT active (cleanup orphans or inactive ones)
         await prisma.album.deleteMany({
             where: {
                 link: { in: portfolioUrls },
+                isActive: false,
             },
         });
 

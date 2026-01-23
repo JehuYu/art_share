@@ -229,7 +229,10 @@ export default function PortfolioEditPage() {
                 body: JSON.stringify({ isPublic: !portfolio.isPublic }),
             });
 
-            if (!res.ok) throw new Error("保存失败");
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "保存失败");
+            }
             setPortfolio({ ...portfolio, isPublic: !portfolio.isPublic });
         } catch (err) {
             setError(err instanceof Error ? err.message : "保存失败");

@@ -24,7 +24,6 @@ export default function Header() {
         fetch("/api/auth/session")
             .then((res) => res.json())
             .then((data) => {
-                console.log("[Header] Session check result:", data);
                 if (data?.user) {
                     setUser({ name: data.user.name, role: data.user.role });
                 } else {

@@ -52,12 +52,15 @@ export default function AdminPortfoliosPage() {
                 body: JSON.stringify({ status }),
             });
 
-            if (!res.ok) throw new Error("操作失败");
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "操作失败");
+            }
 
             setSuccess(status === "APPROVED" ? "作品已通过审核" : "作品已拒绝");
             fetchPortfolios();
-        } catch {
-            setError("操作失败");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "操作失败");
         }
     };
 
@@ -69,12 +72,15 @@ export default function AdminPortfoliosPage() {
                 method: "DELETE",
             });
 
-            if (!res.ok) throw new Error("删除失败");
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "删除失败");
+            }
 
             setSuccess("作品已删除");
             fetchPortfolios();
-        } catch {
-            setError("删除失败");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "删除失败");
         }
     };
 
