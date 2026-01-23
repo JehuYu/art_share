@@ -428,6 +428,7 @@ export default function AdminManagePortfoliosPage() {
                                                             fill
                                                             sizes="48px"
                                                             style={{ objectFit: "cover" }}
+                                                            unoptimized
                                                         />
                                                     ) : (
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -477,6 +478,7 @@ export default function AdminManagePortfoliosPage() {
                                                             fill
                                                             sizes="32px"
                                                             style={{ objectFit: "cover" }}
+                                                            unoptimized
                                                         />
                                                     ) : (
                                                         portfolio.user.name.charAt(0).toUpperCase()

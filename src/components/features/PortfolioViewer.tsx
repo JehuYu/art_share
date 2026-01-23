@@ -163,6 +163,7 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                                             alt={portfolio.user.name}
                                             width={28}
                                             height={28}
+                                            unoptimized
                                         />
                                     ) : (
                                         portfolio.user.name.charAt(0).toUpperCase()
@@ -240,47 +241,66 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                         className={`${styles.mainView} ${isFullscreen ? styles.fullscreen : ""}`}
                         onClick={() => setIsFullscreen(!isFullscreen)}
                     >
-                        {currentItem?.type === "VIDEO" ? (
-                            <video
-                                key={currentItem.id}
-                                src={currentItem.url}
-                                controls
-                                autoPlay
-                                className={styles.currentMedia}
+                        {/* Blurred Background */}
+                        {currentItem && (
+                            <div
+                                className={styles.blurredBackground}
+                                style={{
+                                    backgroundImage: `url(${currentItem.type === "IMAGE" ? currentItem.url : currentItem.thumbnail || ""})`,
+                                }}
                             />
+                        )}
+
+                        {/* Viewer Controls - Top Floating */}
+                        <div className={styles.viewerHeader} onClick={(e) => e.stopPropagation()}>
+                            <div className={styles.counter}>
+                                {currentIndex + 1} / {portfolio.items.length}
+                            </div>
+                        </div>
+
+                        {currentItem?.type === "VIDEO" ? (
+                            <div className={styles.imageWrapper}>
+                                <video
+                                    key={currentItem.id}
+                                    src={currentItem.url}
+                                    controls
+                                    autoPlay
+                                    className={styles.currentMedia}
+                                />
+                            </div>
                         ) : (
                             <div className={styles.imageWrapper}>
                                 {currentItem && (
-                                    <img
+                                    <Image
                                         key={currentItem.id}
                                         src={currentItem.url}
                                         alt={currentItem.title || `Image ${currentIndex + 1}`}
+                                        fill
+                                        style={{ objectFit: "contain" }}
                                         className={styles.currentMedia}
+                                        unoptimized
+                                        priority
                                     />
                                 )}
                             </div>
                         )}
 
-                        {/* Navigation Arrows */}
+                        {/* Floating Navigation Arrows within mainView */}
                         {items.length > 1 && (
                             <>
                                 <button
-                                    className={`${styles.navBtn} ${styles.prevBtn}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        goToPrev();
-                                    }}
+                                    className={`${styles.navButton} ${styles.prev}`}
+                                    onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                                    aria-label="Previous image"
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M15 18l-6-6 6-6" />
                                     </svg>
                                 </button>
                                 <button
-                                    className={`${styles.navBtn} ${styles.nextBtn}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        goToNext();
-                                    }}
+                                    className={`${styles.navButton} ${styles.next}`}
+                                    onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                                    aria-label="Next image"
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M9 18l6-6-6-6" />
@@ -288,12 +308,6 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                                 </button>
                             </>
                         )}
-
-                        {/* Counter */}
-                        <div className={styles.counter}>
-                            {currentIndex + 1} / {items.length}
-                        </div>
-
                         {/* Fullscreen Button */}
                         <button
                             className={styles.fullscreenBtn}
@@ -312,33 +326,35 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                         </button>
                     </div>
 
-                    {/* Thumbnails */}
+                    {/* Floating Thumbnails filmstrip */}
                     {items.length > 1 && (
-                        <div className={styles.thumbnails}>
-                            {items.map((item, index) => (
-                                <button
-                                    key={item.id}
-                                    className={`${styles.thumbnail} ${currentIndex === index ? styles.active : ""
-                                        }`}
-                                    onClick={() => setCurrentIndex(index)}
-                                >
-                                    {item.type === "VIDEO" ? (
-                                        <div className={styles.videoThumb}>
-                                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                                <polygon points="5,3 19,12 5,21" />
-                                            </svg>
-                                        </div>
-                                    ) : (
-                                        <Image
-                                            src={getImageUrl(item, false)}
-                                            alt={item.title || `Thumbnail ${index + 1}`}
-                                            width={80}
-                                            height={60}
-                                            style={{ objectFit: "cover" }}
-                                        />
-                                    )}
-                                </button>
-                            ))}
+                        <div className={styles.thumbnailsContainer}>
+                            <div className={styles.thumbnails}>
+                                {items.map((item, index) => (
+                                    <button
+                                        key={item.id}
+                                        className={`${styles.thumbnail} ${currentIndex === index ? styles.active : ""}`}
+                                        onClick={() => setCurrentIndex(index)}
+                                    >
+                                        {item.type === "VIDEO" ? (
+                                            <div className={styles.videoThumb}>
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="5,3 19,12 5,21" />
+                                                </svg>
+                                            </div>
+                                        ) : (
+                                            <Image
+                                                src={getImageUrl(item, false)}
+                                                alt={item.title || `Thumbnail ${index + 1}`}
+                                                width={60}
+                                                height={45}
+                                                style={{ objectFit: "cover" }}
+                                                unoptimized
+                                            />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -370,6 +386,7 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                                         fill
                                         sizes="(max-width: 768px) 50vw, 33vw"
                                         style={{ objectFit: "cover" }}
+                                        unoptimized
                                         loading="lazy"
                                     />
                                 )}
@@ -379,14 +396,16 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                 </div>
             )}
 
-            {/* Description */}
-            {portfolio.description && (
-                <div className={styles.description}>
-                    <div className="container">
-                        <p>{portfolio.description}</p>
+            {/* Description as an overlay/collapsed section */}
+            {
+                portfolio.description && (
+                    <div className={styles.description}>
+                        <div className={styles.descriptionContent}>
+                            <p>{portfolio.description}</p>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

@@ -280,6 +280,7 @@ export default function AdminAlbumsPage() {
                                         width={200}
                                         height={120}
                                         style={{ objectFit: "cover" }}
+                                        unoptimized
                                     />
                                 </div>
                                 <div className={styles.itemInfo}>
@@ -412,6 +413,7 @@ export default function AdminAlbumsPage() {
                                                                                 width={120}
                                                                                 height={80}
                                                                                 style={{ objectFit: "cover" }}
+                                                                                unoptimized
                                                                             />
                                                                         ) : (
                                                                             <div className={styles.noThumb}>

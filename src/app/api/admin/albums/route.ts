@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
@@ -48,17 +47,12 @@ export async function POST(request: Request) {
 
         if (coverFile) {
             // Save cover image
-            const uploadDir = path.join(process.cwd(), "public", "uploads", "albums");
-            await mkdir(uploadDir, { recursive: true });
-
+            const { uploadFile } = await import("@/lib/storage");
+            const buffer = Buffer.from(await coverFile.arrayBuffer());
             const ext = path.extname(coverFile.name);
             const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-            const filepath = path.join(uploadDir, filename);
 
-            const bytes = await coverFile.arrayBuffer();
-            await writeFile(filepath, Buffer.from(bytes));
-
-            coverUrl = `/uploads/albums/${filename}`;
+            coverUrl = await uploadFile(buffer, filename, "albums", coverFile.type);
         } else if (!coverUrl) {
             // 如果既没有上传文件也没有现有URL，这是一张轮播图，理应有封面
             // 但如果目前允许稍后编辑，我们可以允许空，或者返回默认图

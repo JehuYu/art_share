@@ -147,6 +147,7 @@ export default function ExplorePage() {
                                                                 alt={portfolio.user.name}
                                                                 width={20}
                                                                 height={20}
+                                                                unoptimized
                                                             />
                                                         ) : (
                                                             portfolio.user.name.charAt(0).toUpperCase()

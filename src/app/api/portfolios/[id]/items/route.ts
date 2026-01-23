@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
+import { uploadFile } from "@/lib/storage";
+import { generateThumbnailFromBuffer } from "@/lib/image-utils";
+import path from "path";
 
 // Helper to generate unique filename while preserving original name
 function generateFilename(originalName: string): string {
@@ -80,23 +81,28 @@ export async function POST(
             );
         }
 
-        // Create upload directory
-        const uploadDir = path.join(process.cwd(), "public", "uploads", user.id);
-        await mkdir(uploadDir, { recursive: true });
-
-        // Save file
+        const buffer = Buffer.from(await file.arrayBuffer());
         const filename = generateFilename(file.name);
-        const filepath = path.join(uploadDir, filename);
-        const url = `/uploads/${user.id}/${filename}`;
 
-        const bytes = await file.arrayBuffer();
-        await writeFile(filepath, Buffer.from(bytes));
+        // Upload main file
+        const url = await uploadFile(buffer, filename, user.id, file.type);
+
+        // Generate and upload thumbnail for images
+        let thumbnail: string | undefined;
+        if (file.type.startsWith("image/")) {
+            const thumbBuffer = await generateThumbnailFromBuffer(buffer);
+            if (thumbBuffer) {
+                const thumbFilename = filename.replace(/\.[^/.]+$/, "") + "_thumbnail.webp";
+                thumbnail = await uploadFile(thumbBuffer, thumbFilename, user.id, "image/webp", true);
+            }
+        }
 
         // Create portfolio item
         const item = await prisma.portfolioItem.create({
             data: {
                 type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
                 url,
+                thumbnail,
                 originalName: file.name,
                 portfolioId,
                 order: portfolio._count.items, // Add to end

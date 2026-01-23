@@ -118,6 +118,29 @@ export async function generateThumbnail(
 }
 
 /**
+ * 从 Buffer 生成缩略图 Buffer
+ */
+export async function generateThumbnailFromBuffer(
+    buffer: Buffer,
+    size: keyof typeof IMAGE_SIZES = "thumbnail"
+): Promise<Buffer | null> {
+    try {
+        const dimensions = IMAGE_SIZES[size];
+
+        return await sharp(buffer)
+            .resize(dimensions.width, dimensions.height, {
+                fit: "inside",
+                withoutEnlargement: true,
+            })
+            .webp({ quality: 80 })
+            .toBuffer();
+    } catch (error) {
+        console.error("Generate thumbnail buffer error:", error);
+        return null;
+    }
+}
+
+/**
  * 删除文件及其缩略图
  */
 export async function deleteFileWithThumbnails(filePath: string): Promise<boolean> {

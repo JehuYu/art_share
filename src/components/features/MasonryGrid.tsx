@@ -250,6 +250,7 @@ function PortfolioItem({ portfolio, style }: { portfolio: Portfolio; style?: Rea
                                 alt={portfolio.user.name}
                                 width={28}
                                 height={28}
+                                unoptimized
                             />
                         ) : (
                             portfolio.user.name.charAt(0).toUpperCase()

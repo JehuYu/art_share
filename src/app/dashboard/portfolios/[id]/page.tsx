@@ -53,6 +53,10 @@ export default function PortfolioEditPage() {
     // Lightbox
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+    // Edit info state
+    const [isEditingInfo, setIsEditingInfo] = useState(false);
+    const [editData, setEditData] = useState({ title: "", description: "" });
+
     // Fetch portfolio data
     const fetchPortfolio = useCallback(async () => {
         try {
@@ -76,6 +80,48 @@ export default function PortfolioEditPage() {
     useEffect(() => {
         fetchPortfolio();
     }, [fetchPortfolio]);
+
+    const handleStartEdit = () => {
+        if (!portfolio) return;
+        setEditData({
+            title: portfolio.title,
+            description: portfolio.description || ""
+        });
+        setIsEditingInfo(true);
+    };
+
+    const handleSaveInfo = async () => {
+        if (!portfolio) return;
+        setSaving(true);
+        setError("");
+
+        if (!editData.title.trim()) {
+            setError("标题不能为空");
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/portfolios/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editData),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "更新失败");
+            }
+
+            // Refresh the full portfolio data to ensure state consistency
+            await fetchPortfolio();
+            setIsEditingInfo(false);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "更新失败");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // Handle file selection
     const handleFilesSelected = useCallback(async (files: FileList | File[]) => {
@@ -306,16 +352,68 @@ export default function PortfolioEditPage() {
                             返回仪表盘
                         </Link>
                         <div className={styles.titleRow}>
-                            <h1 className="heading-2">{portfolio.title}</h1>
+                            {isEditingInfo ? (
+                                <input
+                                    type="text"
+                                    className={styles.titleInput}
+                                    value={editData.title}
+                                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                                    placeholder="输入作品集标题"
+                                    autoFocus
+                                />
+                            ) : (
+                                <h1 className="heading-2">{portfolio.title}</h1>
+                            )}
                             {getStatusBadge(portfolio.status)}
                         </div>
-                        {portfolio.description && (
-                            <p style={{ color: "var(--text-secondary)", marginTop: 8 }}>
-                                {portfolio.description}
-                            </p>
+                        {isEditingInfo ? (
+                            <div className={styles.editInfoActions}>
+                                <textarea
+                                    className={styles.descriptionInput}
+                                    value={editData.description}
+                                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                                    placeholder="输入作品集描述"
+                                    rows={3}
+                                />
+                                <div className={styles.editActionButtons}>
+                                    <button
+                                        className="btn btn-primary btn-sm"
+                                        onClick={handleSaveInfo}
+                                        disabled={saving}
+                                    >
+                                        {saving ? "保存中..." : "保存修改"}
+                                    </button>
+                                    <button
+                                        className="btn btn-ghost btn-sm"
+                                        onClick={() => setIsEditingInfo(false)}
+                                        disabled={saving}
+                                    >
+                                        取消
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            portfolio.description && (
+                                <p style={{ color: "var(--text-secondary)", marginTop: 8 }}>
+                                    {portfolio.description}
+                                </p>
+                            )
                         )}
                     </div>
                     <div className={styles.headerActions}>
+                        {!isEditingInfo && (
+                            <button
+                                className="btn btn-ghost"
+                                onClick={handleStartEdit}
+                                style={{ marginRight: 12 }}
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                编辑标题/描述
+                            </button>
+                        )}
                         <Link href={`/portfolio/${id}`} className="btn btn-secondary">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

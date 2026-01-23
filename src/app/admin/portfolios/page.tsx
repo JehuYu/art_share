@@ -153,6 +153,7 @@ export default function AdminPortfoliosPage() {
                                             fill
                                             sizes="(max-width: 768px) 100vw, 33vw"
                                             style={{ objectFit: "cover" }}
+                                            unoptimized
                                         />
                                     ) : (
                                         <div className={styles.placeholder}>
@@ -166,10 +167,10 @@ export default function AdminPortfoliosPage() {
                                     <div className={styles.statusBadge}>
                                         <span
                                             className={`badge ${portfolio.status === "APPROVED"
-                                                    ? "badge-success"
-                                                    : portfolio.status === "REJECTED"
-                                                        ? "badge-error"
-                                                        : "badge-warning"
+                                                ? "badge-success"
+                                                : portfolio.status === "REJECTED"
+                                                    ? "badge-error"
+                                                    : "badge-warning"
                                                 }`}
                                         >
                                             {portfolio.status === "APPROVED"

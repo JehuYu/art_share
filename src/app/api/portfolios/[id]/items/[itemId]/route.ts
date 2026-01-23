@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { unlink } from "fs/promises";
-import path from "path";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
+import { deleteFile } from "@/lib/storage";
 
 // DELETE - Delete portfolio item
 export async function DELETE(
@@ -50,12 +49,10 @@ export async function DELETE(
             );
         }
 
-        // Delete file from disk
-        try {
-            const filepath = path.join(process.cwd(), "public", item.url);
-            await unlink(filepath);
-        } catch {
-            // Ignore file deletion errors
+        // Delete files from storage (local or cloud)
+        await deleteFile(item.url);
+        if (item.thumbnail) {
+            await deleteFile(item.thumbnail);
         }
 
         // Delete from database

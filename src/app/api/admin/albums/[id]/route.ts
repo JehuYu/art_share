@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
+// import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
@@ -33,17 +33,12 @@ export async function PUT(request: Request, { params }: Props) {
 
         if (coverFile) {
             // Save new cover image
-            const uploadDir = path.join(process.cwd(), "public", "uploads", "albums");
-            await mkdir(uploadDir, { recursive: true });
-
+            const { uploadFile } = await import("@/lib/storage");
+            const buffer = Buffer.from(await coverFile.arrayBuffer());
             const ext = path.extname(coverFile.name);
             const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-            const filepath = path.join(uploadDir, filename);
 
-            const bytes = await coverFile.arrayBuffer();
-            await writeFile(filepath, Buffer.from(bytes));
-
-            updateData.cover = `/uploads/albums/${filename}`;
+            updateData.cover = await uploadFile(buffer, filename, "albums", coverFile.type);
         } else if (coverUrl) {
             updateData.cover = coverUrl;
         }
@@ -92,6 +87,16 @@ export async function DELETE(_request: Request, { params }: Props) {
 
         if (!user || user.role !== "ADMIN") {
             return NextResponse.json({ error: "无权访问" }, { status: 403 });
+        }
+
+        const album = await prisma.album.findUnique({
+            where: { id },
+            select: { cover: true },
+        });
+
+        if (album?.cover) {
+            const { deleteFile } = await import("@/lib/storage");
+            await deleteFile(album.cover);
         }
 
         await prisma.album.delete({

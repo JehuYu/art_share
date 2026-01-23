@@ -78,9 +78,15 @@ model SystemSettings {
   siteDescription     String? @default("夏令营作品展示平台")
   requireApproval     Boolean @default(true)  // 审核开关
   maxFileSize         Int     @default(52428800) // 50MB in bytes
-  storageType         String  @default("local") // local, cloud
+  storageType         String  @default("local") // local, cos
   localStoragePath    String  @default("uploads")
-  cloudStorageConfig  String? // JSON格式的云存储配置
+  cloudStorageConfig  String? // Legacy or generic config
+  
+  // Tencent COS Configuration
+  cosBucket           String?
+  cosRegion           String?
+  cosSecretId         String?
+  cosSecretKey        String?
   allowRegistration   Boolean @default(true)
   // 显示设置
   exploreViewMode     String  @default("grid")   // grid, carousel

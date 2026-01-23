@@ -166,6 +166,7 @@ export default function PortfoliosPage() {
                                                 fill
                                                 sizes="(max-width: 768px) 100vw, 33vw"
                                                 style={{ objectFit: "cover" }}
+                                                unoptimized
                                             />
                                         ) : (
                                             <div className={styles.placeholder}>

@@ -86,14 +86,13 @@ export async function DELETE(request: Request) {
         });
 
         // 导入文件清理工具
-        const { deleteFileWithThumbnails } = await import("@/lib/image-utils");
+        const { deleteFile } = await import("@/lib/storage");
 
         // 清理物理文件（异步执行，不阻塞响应）
         const fileCleanupPromises = portfolioItems.map(async (item) => {
-            try {
-                await deleteFileWithThumbnails(item.url);
-            } catch (err) {
-                console.warn(`Failed to delete file ${item.url}:`, err);
+            await deleteFile(item.url);
+            if (item.thumbnail) {
+                await deleteFile(item.thumbnail);
             }
         });
         Promise.allSettled(fileCleanupPromises).catch(console.error);
@@ -102,6 +101,14 @@ export async function DELETE(request: Request) {
         await prisma.featuredPortfolio.deleteMany({
             where: {
                 portfolioId: { in: ids },
+            },
+        });
+
+        // Delete albums that link to any of these portfolios
+        const portfolioUrls = ids.map(id => `/portfolio/${id}`);
+        await prisma.album.deleteMany({
+            where: {
+                link: { in: portfolioUrls },
             },
         });
 

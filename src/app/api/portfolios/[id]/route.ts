@@ -102,11 +102,12 @@ export async function PATCH(
         }
 
         const body = await request.json();
+        console.log(`[PATCH] Updating portfolio ${id}:`, body);
         const { title, description, cover, isPublic } = body;
 
         const updateData: Record<string, unknown> = {};
         if (title !== undefined) updateData.title = title;
-        if (description !== undefined) updateData.description = description;
+        if (description !== undefined) updateData.description = description || null;
         if (cover !== undefined) updateData.cover = cover;
         if (isPublic !== undefined && portfolio.status === "APPROVED") {
             // Check if trying to make private and if portfolio is used in carousel
@@ -132,13 +133,19 @@ export async function PATCH(
         const updated = await prisma.portfolio.update({
             where: { id },
             data: updateData,
+            include: {
+                items: {
+                    orderBy: { order: "asc" },
+                },
+            },
         });
 
         return NextResponse.json(updated);
     } catch (error) {
         console.error("Update portfolio error:", error);
+        const message = error instanceof Error ? error.message : "更新失败";
         return NextResponse.json(
-            { error: "更新失败" },
+            { error: `更新失败: ${message}` },
             { status: 500 }
         );
     }
@@ -186,14 +193,13 @@ export async function DELETE(
         }
 
         // 导入文件清理工具
-        const { deleteFileWithThumbnails } = await import("@/lib/image-utils");
+        const { deleteFile } = await import("@/lib/storage");
 
         // 删除所有关联的物理文件
         const fileCleanupPromises = portfolio.items.map(async (item) => {
-            try {
-                await deleteFileWithThumbnails(item.url);
-            } catch (err) {
-                console.warn(`Failed to delete file ${item.url}:`, err);
+            await deleteFile(item.url);
+            if (item.thumbnail) {
+                await deleteFile(item.thumbnail);
             }
         });
 
@@ -203,6 +209,13 @@ export async function DELETE(
         // Delete from featured if exists
         await prisma.featuredPortfolio.deleteMany({
             where: { portfolioId: id },
+        });
+
+        // Delete albums that link to this portfolio
+        await prisma.album.deleteMany({
+            where: {
+                link: `/portfolio/${id}`,
+            },
         });
 
         // Delete associated portfolio items

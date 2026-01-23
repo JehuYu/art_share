@@ -78,12 +78,17 @@ export default function Carousel({ albums, autoPlayInterval = 5000 }: CarouselPr
                                         style={{ backgroundImage: `url(${album.cover})` }}
                                     />
                                     {/* Main image - fully visible */}
-                                    <img
-                                        src={album.cover}
-                                        alt={album.title}
-                                        className={styles.carouselImage}
-                                        loading={index === 0 ? "eager" : "lazy"}
-                                    />
+                                    <div className={styles.imageContainer}>
+                                        <Image
+                                            src={album.cover}
+                                            alt={album.title}
+                                            fill
+                                            style={{ objectFit: "contain" }}
+                                            className={styles.carouselImage}
+                                            loading={index === 0 ? "eager" : "lazy"}
+                                            unoptimized
+                                        />
+                                    </div>
                                 </>
                             ) : (
                                 <div className={styles.placeholderBg} />

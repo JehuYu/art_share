@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
@@ -55,12 +54,9 @@ export async function POST(request: Request) {
         const maxFileSize = settings?.maxFileSize || 52428800; // 50MB default
         const requireApproval = settings?.requireApproval ?? true;
 
-        // Create upload directory
-        const uploadDir = path.join(process.cwd(), "public", "uploads", user.id);
-        await mkdir(uploadDir, { recursive: true });
-
         // 动态导入图片处理工具（避免在不需要时加载）
-        const { generateThumbnail, isImageFile } = await import("@/lib/image-utils");
+        const { isImageFile, generateThumbnailFromBuffer } = await import("@/lib/image-utils");
+        const { uploadFile } = await import("@/lib/storage");
 
         // Process files
         const uploadedItems: { type: string; url: string; thumbnail?: string; originalName?: string; order: number }[] = [];
@@ -77,19 +73,22 @@ export async function POST(request: Request) {
             }
 
             const filename = generateFilename(file.name);
-            const filepath = path.join(uploadDir, filename);
-            const url = `/uploads/${user.id}/${filename}`;
+            const buffer = Buffer.from(await file.arrayBuffer());
 
-            // Write file
-            const bytes = await file.arrayBuffer();
-            await writeFile(filepath, Buffer.from(bytes));
+            // Upload main file
+            const url = await uploadFile(buffer, filename, user.id, file.type);
 
             // 为图片生成缩略图
             let thumbnail: string | undefined;
             if (isImageFile(file.name)) {
-                const thumbResult = await generateThumbnail(filepath);
-                if (thumbResult) {
-                    thumbnail = thumbResult;
+                const thumbBuffer = await generateThumbnailFromBuffer(buffer);
+                if (thumbBuffer) {
+                    const thumbFilename = filename.replace(/\.[^/.]+$/, "") + "_thumbnail.webp";
+                    // Only force local if using COS (to support the hybrid requirement), 
+                    // or just always force local for thumbnails regardless of setting?
+                    // User said "When using cloud storage... use local thumbnail".
+                    // If using local storage, this works normally (forceLocal=true is redundant but harmless).
+                    thumbnail = await uploadFile(thumbBuffer, thumbFilename, user.id, "image/webp", true);
                 }
             }
 
@@ -105,7 +104,8 @@ export async function POST(request: Request) {
         // Determine cover
         let cover: string | undefined;
         if (uploadedItems.length > 0 && coverIndex < uploadedItems.length) {
-            cover = uploadedItems[coverIndex].url;
+            // Prefer thumbnail (which is local) for the cover to improve loading performance
+            cover = uploadedItems[coverIndex].thumbnail || uploadedItems[coverIndex].url;
         }
 
         // Create portfolio

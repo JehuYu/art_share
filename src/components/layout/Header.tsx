@@ -27,12 +27,15 @@ export default function Header() {
                 console.log("[Header] Session check result:", data);
                 if (data?.user) {
                     setUser({ name: data.user.name, role: data.user.role });
+                } else {
+                    setUser(null);
                 }
             })
             .catch((err) => {
                 console.error("[Header] Session check failed:", err);
+                setUser(null);
             });
-    }, []); // Remove pathname dependency into allow caching session check
+    }, [pathname]);
 
     const isActive = (path: string) => pathname === path;
 

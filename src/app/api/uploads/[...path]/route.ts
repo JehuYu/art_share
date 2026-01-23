@@ -15,8 +15,11 @@ export async function GET(
         const fullPath = path.join(uploadDir, ...filePathSegments);
 
         // 安全检查：确保路径不越出 uploads 目录
-        const normalizedPath = path.normalize(fullPath);
-        if (!normalizedPath.startsWith(uploadDir)) {
+        const normalizedPath = path.normalize(fullPath).toLowerCase();
+        const normalizedUploadDir = path.normalize(uploadDir).toLowerCase();
+
+        if (!normalizedPath.startsWith(normalizedUploadDir)) {
+            console.error("Path breakout attempt:", { fullPath, uploadDir });
             return new NextResponse("Forbidden", { status: 403 });
         }
 

@@ -80,6 +80,13 @@ export async function DELETE(_request: Request, { params }: Props) {
             where: { portfolioId: id },
         });
 
+        // Delete albums that link to this portfolio
+        await prisma.album.deleteMany({
+            where: {
+                link: `/portfolio/${id}`,
+            },
+        });
+
         // Delete associated portfolio items
         await prisma.portfolioItem.deleteMany({
             where: { portfolioId: id },

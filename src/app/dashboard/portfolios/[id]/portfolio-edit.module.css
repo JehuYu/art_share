@@ -47,6 +47,51 @@
     gap: var(--spacing-md);
 }
 
+.titleInput {
+    flex: 1;
+    font-family: inherit;
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.editInfoActions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    width: 100%;
+}
+
+.descriptionInput {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.875rem;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    resize: vertical;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.descriptionInput:focus {
+    border-color: var(--accent);
+}
+
+.editActionButtons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
 .statusBadge {
     display: inline-flex;
     align-items: center;

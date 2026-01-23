@@ -62,6 +62,10 @@ export async function PUT(request: Request) {
                 featuredViewMode: data.featuredViewMode,
                 featuredColumns: data.featuredColumns,
                 featuredMaxRows: data.featuredMaxRows,
+                cosBucket: data.cosBucket,
+                cosRegion: data.cosRegion,
+                cosSecretId: data.cosSecretId,
+                cosSecretKey: data.cosSecretKey,
             },
             create: {
                 id: "default",
@@ -77,6 +81,10 @@ export async function PUT(request: Request) {
                 featuredViewMode: data.featuredViewMode || "masonry",
                 featuredColumns: data.featuredColumns || 4,
                 featuredMaxRows: data.featuredMaxRows || 2,
+                cosBucket: data.cosBucket,
+                cosRegion: data.cosRegion,
+                cosSecretId: data.cosSecretId,
+                cosSecretKey: data.cosSecretKey,
             },
         });
 

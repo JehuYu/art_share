@@ -17,6 +17,10 @@ interface Settings {
     featuredViewMode: string;
     featuredColumns: number;
     featuredMaxRows: number;
+    cosBucket?: string;
+    cosRegion?: string;
+    cosSecretId?: string;
+    cosSecretKey?: string;
 }
 
 export default function AdminSettingsPage() {
@@ -215,7 +219,7 @@ export default function AdminSettingsPage() {
                                     onChange={(e) => setSettings({ ...settings, storageType: e.target.value })}
                                 >
                                     <option value="local">本地存储</option>
-                                    <option value="cloud">云存储</option>
+                                    <option value="cos">腾讯云储存 (COS)</option>
                                 </select>
                             </div>
 
@@ -232,11 +236,47 @@ export default function AdminSettingsPage() {
                                 </div>
                             )}
 
-                            {settings.storageType === "cloud" && (
+                            {settings.storageType === "cos" && (
                                 <div className={styles.cloudConfig}>
-                                    <p className={styles.cloudHint}>
-                                        云存储配置需要在服务器环境变量中设置相关密钥
-                                    </p>
+                                    <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>腾讯云配置</h3>
+                                    <div className="form-group">
+                                        <label className="label">存储桶名称 (Bucket)</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            placeholder="例如: aiyoung-1327327700"
+                                            value={settings.cosBucket || ""}
+                                            onChange={(e) => setSettings({ ...settings, cosBucket: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">所属地域 (Region)</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            placeholder="例如: ap-shanghai"
+                                            value={settings.cosRegion || ""}
+                                            onChange={(e) => setSettings({ ...settings, cosRegion: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">SecretId</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={settings.cosSecretId || ""}
+                                            onChange={(e) => setSettings({ ...settings, cosSecretId: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">SecretKey</label>
+                                        <input
+                                            type="password"
+                                            className="input"
+                                            value={settings.cosSecretKey || ""}
+                                            onChange={(e) => setSettings({ ...settings, cosSecretKey: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
