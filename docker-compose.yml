@@ -14,8 +14,8 @@ services:
     environment:
       # Database configuration
       - DATABASE_URL=file:/app/prisma/dev.db
-      # IMPORTANT: Change this secret in production!
-      - AUTH_SECRET=${AUTH_SECRET:-your-super-secret-key-change-in-production}
+      # AUTH_SECRET: 用于 JWT 签名
+      - AUTH_SECRET=${AUTH_SECRET:-art-share-jwt-secret-2026}
       - NODE_ENV=production
     volumes:
       # Persist database
