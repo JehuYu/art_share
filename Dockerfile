@@ -1,76 +1,102 @@
+# ============================================
+# Art Share - Multi-stage Docker Build
+# ============================================
 
+# Base image with common dependencies
 FROM node:20-alpine AS base
-# Install common dependencies needed for both build and runtime
-# openssl is required for Prisma, libc6-compat for some native modules
-RUN apk add --no-cache libc6-compat openssl
+# Install dependencies needed for both build and runtime
+# - openssl: required for Prisma
+# - libc6-compat: for some native modules
+# - vips: for sharp image processing
+RUN apk add --no-cache libc6-compat openssl vips vips-dev
 
-# Install dependencies only when needed
+# ============================================
+# Stage 1: Install dependencies
+# ============================================
 FROM base AS deps
 WORKDIR /app
 
+# Copy package files
 COPY package.json package-lock.json* ./
+
+# Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Rebuild the source code only when needed
+# ============================================
+# Stage 2: Build the application
+# ============================================
 FROM base AS builder
 WORKDIR /app
+
+# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Environment variables for build time
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 # Use a template DB file for build-time initialization
 ENV DATABASE_URL="file:/app/template.db"
 
-# 1. Generate Client
+# Generate Prisma Client
 RUN npx prisma generate
 
-# 2. Initialize DB file (Create structure)
+# Initialize DB structure
 RUN npx prisma db push
 
-# 3. Seed data (Create admin)
+# Seed initial data (create admin user)
 RUN npx tsx prisma/seed.ts
 
-# 4. Build Next.js app
+# Build Next.js application
 RUN npm run build
 
-# Production image, copy all the files and run next
+# ============================================
+# Stage 3: Production runtime
+# ============================================
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+# Set production environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
+# Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy public assets
 COPY --from=builder /app/public ./public
 
-# Set permissions
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Create necessary directories with proper permissions
+RUN mkdir -p .next
+RUN mkdir -p public/uploads
+RUN chown -R nextjs:nodejs .next
+RUN chown -R nextjs:nodejs public/uploads
 
-# Copy standalone build
+# Copy standalone build output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma schema and the PRE-BUILT template database
+# Copy Prisma files and template database
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/template.db ./template.db
 
-# (openssl is already in base)
-
-USER nextjs
-
+# Expose port
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+# Set runtime environment variables
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Startup Logic:
-# 1. Check if the volume-mounted DB exists (prisma/dev.db)
-# 2. If not, copy our pre-built 'template.db' to 'prisma/dev.db'
-# 3. Start server
+# Switch to non-root user
+USER nextjs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# Startup script:
+# 1. Check if volume-mounted DB exists (prisma/dev.db)
+# 2. If not, copy pre-built template.db
+# 3. Start the server
 CMD ["/bin/sh", "-c", "if [ ! -f prisma/dev.db ]; then echo 'Initializing fresh database...'; cp template.db prisma/dev.db; fi && node server.js"]
-
