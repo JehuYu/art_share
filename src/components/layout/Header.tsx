@@ -32,7 +32,7 @@ export default function Header() {
             .catch((err) => {
                 console.error("[Header] Session check failed:", err);
             });
-    }, [pathname]);
+    }, []); // Remove pathname dependency into allow caching session check
 
     const isActive = (path: string) => pathname === path;
 

@@ -251,14 +251,11 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                         ) : (
                             <div className={styles.imageWrapper}>
                                 {currentItem && (
-                                    <Image
+                                    <img
                                         key={currentItem.id}
                                         src={currentItem.url}
                                         alt={currentItem.title || `Image ${currentIndex + 1}`}
-                                        fill
-                                        priority
-                                        sizes="100vw"
-                                        style={{ objectFit: "contain" }}
+                                        className={styles.currentMedia}
                                     />
                                 )}
                             </div>
