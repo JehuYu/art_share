@@ -61,24 +61,22 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
 # Copy public assets
 COPY --from=builder /app/public ./public
 
 # Create necessary directories
-RUN mkdir -p .next public/uploads
-RUN chown -R nextjs:nodejs .next public/uploads
+RUN mkdir -p .next public/uploads data
 
 # Copy standalone build output
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Copy Prisma files and template database
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/template.db ./template.db
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/template.db ./template.db
+
+# Set permissions for all writable directories
+RUN chmod -R 777 .next public/uploads data
 
 # Expose port
 EXPOSE 3000
@@ -86,12 +84,10 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Switch to non-root user
-USER nextjs
-
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Startup script
-CMD ["/bin/sh", "-c", "if [ ! -f prisma/dev.db ]; then echo 'Initializing fresh database...'; cp template.db prisma/dev.db; fi && node server.js"]
+# Startup: initialize database if not exists, then start server
+CMD ["/bin/sh", "-c", "if [ ! -f data/dev.db ]; then echo 'Initializing database...'; cp template.db data/dev.db; fi && DATABASE_URL=file:/app/data/dev.db node server.js"]
+

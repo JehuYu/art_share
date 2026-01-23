@@ -8,14 +8,15 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL=file:/app/data/dev.db
       - AUTH_SECRET=${AUTH_SECRET:-art-share-secret-2026}
     volumes:
       # 数据持久化
-      - ./data:/app/prisma
+      - ./data:/app/data
       - ./uploads:/app/public/uploads
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+
