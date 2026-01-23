@@ -2,18 +2,21 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 // GET - Logout via link (redirect to home)
-export async function GET() {
+// GET - Logout via link (redirect to home)
+export async function GET(request: Request) {
     try {
         const cookieStore = await cookies();
 
         // Clear the auth token cookie
         cookieStore.delete("auth-token");
 
-        // Redirect to home page
-        return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"));
+        // Redirect to home page dynamicall
+        const url = new URL(request.url);
+        return NextResponse.redirect(new URL("/", url.origin));
     } catch (error) {
         console.error("Logout error:", error);
-        return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"));
+        // Fallback
+        return NextResponse.redirect(new URL("/", request.url));
     }
 }
 
