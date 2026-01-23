@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
 const JWT_SECRET = new TextEncoder().encode(
-    process.env.AUTH_SECRET || "your-secret-key-here"
+    process.env.AUTH_SECRET || "art-share-jwt-secret-2026"
 );
 
 export async function POST(request: Request) {
