@@ -18,7 +18,16 @@ export async function getAuthUser(): Promise<AuthUser | null> {
         const token = cookieStore.get("auth-token");
 
         if (!token?.value) {
-            console.log("[Auth] No auth-token cookie found");
+            // 尝试获取 headers 来调试来源
+            const { headers } = await import("next/headers");
+            const headerList = await headers();
+            const referer = headerList.get("referer") || "unknown";
+            const userAgent = headerList.get("user-agent") || "unknown";
+            // 降低这个日志的级别，或者是为了调试才打开。
+            // 只有当 referer 指向管理后台等需要登录的页面时才打印 Warning
+            if (referer.includes("/admin") || referer.includes("/dashboard")) {
+                console.warn(`[Auth] Missing cookie on protected route. Referer: ${referer}, UA: ${userAgent}`);
+            }
             return null;
         }
 
