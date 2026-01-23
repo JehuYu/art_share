@@ -59,8 +59,11 @@ export async function POST(request: Request) {
         const uploadDir = path.join(process.cwd(), "public", "uploads", user.id);
         await mkdir(uploadDir, { recursive: true });
 
+        // 动态导入图片处理工具（避免在不需要时加载）
+        const { generateThumbnail, isImageFile } = await import("@/lib/image-utils");
+
         // Process files
-        const uploadedItems: { type: string; url: string; thumbnail?: string; order: number }[] = [];
+        const uploadedItems: { type: string; url: string; thumbnail?: string; originalName?: string; order: number }[] = [];
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -81,9 +84,20 @@ export async function POST(request: Request) {
             const bytes = await file.arrayBuffer();
             await writeFile(filepath, Buffer.from(bytes));
 
+            // 为图片生成缩略图
+            let thumbnail: string | undefined;
+            if (isImageFile(file.name)) {
+                const thumbResult = await generateThumbnail(filepath);
+                if (thumbResult) {
+                    thumbnail = thumbResult;
+                }
+            }
+
             uploadedItems.push({
                 type: file.type.startsWith("video/") ? "VIDEO" : "IMAGE",
                 url,
+                thumbnail,
+                originalName: file.name,
                 order: i,
             });
         }

@@ -75,6 +75,17 @@ export async function DELETE(_request: Request, { params }: Props) {
             return NextResponse.json({ error: "无权访问" }, { status: 403 });
         }
 
+        // First delete from featured if exists
+        await prisma.featuredPortfolio.deleteMany({
+            where: { portfolioId: id },
+        });
+
+        // Delete associated portfolio items
+        await prisma.portfolioItem.deleteMany({
+            where: { portfolioId: id },
+        });
+
+        // Then delete the portfolio
         await prisma.portfolio.delete({
             where: { id },
         });

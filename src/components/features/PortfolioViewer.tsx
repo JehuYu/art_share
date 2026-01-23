@@ -33,6 +33,19 @@ interface PortfolioViewerProps {
 
 type ViewMode = "carousel" | "album";
 
+/**
+ * 获取显示用的图片 URL
+ * @param item 作品项目
+ * @param useOriginal 是否使用原图（当前查看的图片应该使用原图）
+ */
+function getImageUrl(item: PortfolioItem, useOriginal: boolean = false): string {
+    if (useOriginal) {
+        return item.url; // 当前查看的图片使用原图
+    }
+    // 其他图片优先使用缩略图
+    return item.thumbnail || item.url;
+}
+
 export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("carousel");
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -108,6 +121,24 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
             stopAutoPlay();
         }
     }, [viewMode, isAutoPlaying, stopAutoPlay]);
+
+    // 预加载相邻图片的原图（提升用户体验）
+    useEffect(() => {
+        if (items.length <= 1) return;
+
+        // 预加载前一张和后一张的原图
+        const prevIndex = (currentIndex - 1 + items.length) % items.length;
+        const nextIndex = (currentIndex + 1) % items.length;
+
+        const imagesToPreload = [items[prevIndex], items[nextIndex]].filter(
+            (item) => item && item.type === "IMAGE"
+        );
+
+        imagesToPreload.forEach((item) => {
+            const img = new window.Image();
+            img.src = item.url; // 预加载原图
+        });
+    }, [currentIndex, items]);
 
     const currentItem = items[currentIndex];
 
@@ -302,7 +333,7 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                                         </div>
                                     ) : (
                                         <Image
-                                            src={item.url}
+                                            src={getImageUrl(item, false)}
                                             alt={item.title || `Thumbnail ${index + 1}`}
                                             width={80}
                                             height={60}
@@ -337,11 +368,12 @@ export default function PortfolioViewer({ portfolio }: PortfolioViewerProps) {
                                     </div>
                                 ) : (
                                     <Image
-                                        src={item.url}
+                                        src={getImageUrl(item, false)}
                                         alt={item.title || `Image ${index + 1}`}
                                         fill
                                         sizes="(max-width: 768px) 50vw, 33vw"
                                         style={{ objectFit: "cover" }}
+                                        loading="lazy"
                                     />
                                 )}
                             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./explore.module.css";
@@ -24,48 +24,60 @@ export default function ExplorePage() {
     const [loading, setLoading] = useState(true);
     const [columns, setColumns] = useState(4);
     const [viewMode, setViewMode] = useState<"grid" | "masonry">("masonry");
+    const [shuffleSeed, setShuffleSeed] = useState<number>(() => Date.now());
 
-    useEffect(() => {
-        fetchPortfolios();
-        fetchSettings();
-    }, []);
-
-    // Fisher-Yates shuffle algorithm for random ordering
-    const shuffleArray = <T,>(array: T[]): T[] => {
+    // 使用 useCallback 优化 shuffle 函数
+    const shuffleArray = useCallback(<T,>(array: T[], seed: number): T[] => {
         const shuffled = [...array];
+        // 基于种子的确定性随机（每次刷新页面会产生新的随机顺序）
+        let currentSeed = seed;
+        const random = () => {
+            currentSeed = (currentSeed * 9301 + 49297) % 233280;
+            return currentSeed / 233280;
+        };
+
         for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Math.floor(random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         return shuffled;
-    };
+    }, []);
 
-    const fetchPortfolios = async () => {
-        try {
-            const res = await fetch("/api/portfolios?limit=50");
-            const data = await res.json();
-            // Randomly shuffle the portfolios
-            const shuffledPortfolios = shuffleArray<Portfolio>(data.portfolios || []);
-            setPortfolios(shuffledPortfolios);
-        } catch (error) {
-            console.error("Failed to fetch portfolios:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        // 并行获取数据和设置
+        const fetchData = async () => {
+            try {
+                const [portfoliosRes, settingsRes] = await Promise.all([
+                    fetch("/api/portfolios?limit=50"),
+                    fetch("/api/settings"),
+                ]);
 
-    const fetchSettings = async () => {
-        try {
-            const res = await fetch("/api/settings");
-            if (res.ok) {
-                const data = await res.json();
-                if (data.exploreViewMode) setViewMode(data.exploreViewMode);
-                if (data.exploreColumns) setColumns(data.exploreColumns);
+                // 处理作品集数据
+                if (portfoliosRes.ok) {
+                    const data = await portfoliosRes.json();
+                    setPortfolios(data.portfolios || []);
+                }
+
+                // 处理设置数据
+                if (settingsRes.ok) {
+                    const settings = await settingsRes.json();
+                    if (settings.exploreViewMode) setViewMode(settings.exploreViewMode);
+                    if (settings.exploreColumns) setColumns(settings.exploreColumns);
+                }
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error("Failed to fetch settings:", error);
-        }
-    };
+        };
+
+        fetchData();
+    }, []);
+
+    // 使用 useMemo 避免每次渲染都重新 shuffle
+    const displayPortfolios = useMemo(() => {
+        return shuffleArray(portfolios, shuffleSeed);
+    }, [portfolios, shuffleSeed, shuffleArray]);
 
     return (
         <div className={styles.page}>
@@ -84,7 +96,7 @@ export default function ExplorePage() {
                         <div className="loading-spinner"></div>
                         <p>加载中...</p>
                     </div>
-                ) : portfolios.length === 0 ? (
+                ) : displayPortfolios.length === 0 ? (
                     <div className={styles.empty}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -99,7 +111,7 @@ export default function ExplorePage() {
                         className={`${styles.gallery} ${viewMode === "grid" ? styles.gridView : styles.masonryView}`}
                         style={{ "--columns": columns } as React.CSSProperties}
                     >
-                        {portfolios.map((portfolio, index) => (
+                        {displayPortfolios.map((portfolio, index) => (
                             <Link
                                 key={portfolio.id}
                                 href={`/portfolio/${portfolio.id}`}

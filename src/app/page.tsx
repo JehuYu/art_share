@@ -4,24 +4,45 @@ import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
 import styles from "./page.module.css";
 
-export const dynamic = "force-dynamic";
+// 启用 ISR，每 60 秒重新验证
+export const revalidate = 60;
 
-async function getAlbums() {
+// 优化后的数据获取函数 - 合并查询
+async function getHomePageData() {
   try {
-    const albums = await prisma.album.findMany({
-      where: { isActive: true },
-      orderBy: { order: "asc" },
-    });
-    return albums;
-  } catch (error) {
-    console.error("Fetch albums error:", error);
-    return [];
-  }
-}
+    // 并行获取所有基础数据
+    const [albums, featured, settings] = await Promise.all([
+      // 获取轮播图
+      prisma.album.findMany({
+        where: { isActive: true },
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          cover: true,
+          link: true,
+        },
+      }),
+      // 获取精选作品 ID
+      prisma.featuredPortfolio.findMany({
+        orderBy: { order: "asc" },
+        select: { portfolioId: true },
+      }),
+      // 获取系统设置
+      prisma.systemSettings.findFirst({
+        select: {
+          featuredViewMode: true,
+          featuredColumns: true,
+          featuredMaxRows: true,
+        },
+      }),
+    ]);
 
-async function getPortfolios() {
-  try {
-    const portfolios = await prisma.portfolio.findMany({
+    const featuredIds = featured.map((f) => f.portfolioId);
+
+    // 一次性获取所有需要的作品集（精选 + 非精选）
+    const allPortfolios = await prisma.portfolio.findMany({
       where: {
         status: "APPROVED",
         isPublic: true,
@@ -39,44 +60,66 @@ async function getPortfolios() {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 30, // 多获取一些以防精选的不够
     });
 
-    return portfolios.map((p) => ({
+    // 分离精选和非精选
+    const featuredPortfolios: typeof allPortfolios = [];
+    const otherPortfolios: typeof allPortfolios = [];
+
+    for (const portfolio of allPortfolios) {
+      if (featuredIds.includes(portfolio.id)) {
+        featuredPortfolios.push(portfolio);
+      } else {
+        otherPortfolios.push(portfolio);
+      }
+    }
+
+    // 按精选顺序排序
+    const sortedFeatured = featuredIds
+      .map((id) => featuredPortfolios.find((p) => p.id === id))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined);
+
+    // 合并：精选优先，然后是其他作品，最多 20 个
+    const remainingCount = Math.max(0, 20 - sortedFeatured.length);
+    const finalPortfolios = [
+      ...sortedFeatured,
+      ...otherPortfolios.slice(0, remainingCount),
+    ].map((p) => ({
       ...p,
       itemCount: p._count.items,
     }));
-  } catch (error) {
-    console.error("Fetch portfolios error:", error);
-    return [];
-  }
-}
 
-async function getSystemSettings() {
-  try {
-    const settings = await prisma.systemSettings.findFirst();
-    return settings || {
-      featuredViewMode: "masonry",
-      featuredColumns: 4,
-      featuredMaxRows: 2,
+    return {
+      albums,
+      portfolios: finalPortfolios,
+      settings: settings || {
+        featuredViewMode: "masonry",
+        featuredColumns: 4,
+        featuredMaxRows: 2,
+      },
     };
   } catch (error) {
-    console.error("Fetch settings error:", error);
+    console.error("Fetch home page data error:", error);
     return {
-      featuredViewMode: "masonry",
-      featuredColumns: 4,
-      featuredMaxRows: 2,
+      albums: [],
+      portfolios: [],
+      settings: {
+        featuredViewMode: "masonry",
+        featuredColumns: 4,
+        featuredMaxRows: 2,
+      },
     };
   }
 }
 
 export default async function HomePage() {
-  const [albums, portfolios, settings, currentUser] = await Promise.all([
-    getAlbums(),
-    getPortfolios(),
-    getSystemSettings(),
+  const [homeData, currentUser] = await Promise.all([
+    getHomePageData(),
     getAuthUser(),
   ]);
+
+  const { albums, portfolios, settings } = homeData;
 
   return (
     <div className={styles.page}>

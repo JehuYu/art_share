@@ -160,8 +160,14 @@ export async function DELETE(
             );
         }
 
+        // 获取作品集及其所有项目
         const portfolio = await prisma.portfolio.findUnique({
             where: { id },
+            include: {
+                items: {
+                    select: { url: true, thumbnail: true },
+                },
+            },
         });
 
         if (!portfolio) {
@@ -179,6 +185,32 @@ export async function DELETE(
             );
         }
 
+        // 导入文件清理工具
+        const { deleteFileWithThumbnails } = await import("@/lib/image-utils");
+
+        // 删除所有关联的物理文件
+        const fileCleanupPromises = portfolio.items.map(async (item) => {
+            try {
+                await deleteFileWithThumbnails(item.url);
+            } catch (err) {
+                console.warn(`Failed to delete file ${item.url}:`, err);
+            }
+        });
+
+        // 并行执行文件清理（但不阻塞响应）
+        Promise.allSettled(fileCleanupPromises).catch(console.error);
+
+        // Delete from featured if exists
+        await prisma.featuredPortfolio.deleteMany({
+            where: { portfolioId: id },
+        });
+
+        // Delete associated portfolio items
+        await prisma.portfolioItem.deleteMany({
+            where: { portfolioId: id },
+        });
+
+        // Delete the portfolio
         await prisma.portfolio.delete({
             where: { id },
         });

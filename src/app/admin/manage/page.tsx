@@ -39,9 +39,11 @@ export default function AdminManagePortfoliosPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ title: "", description: "", isPublic: true });
+    const [featuredIds, setFeaturedIds] = useState<string[]>([]);
 
     useEffect(() => {
         fetchPortfolios();
+        fetchFeatured();
     }, [statusFilter, sortField, sortOrder]);
 
     const fetchPortfolios = async () => {
@@ -60,6 +62,43 @@ export default function AdminManagePortfoliosPage() {
             setError("获取作品列表失败");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchFeatured = async () => {
+        try {
+            const res = await fetch("/api/admin/featured");
+            const data = await res.json();
+            setFeaturedIds((data.featured || []).map((f: { portfolioId: string }) => f.portfolioId));
+        } catch {
+            console.error("获取精选列表失败");
+        }
+    };
+
+    const toggleFeatured = async (portfolioId: string) => {
+        const isFeatured = featuredIds.includes(portfolioId);
+        try {
+            if (isFeatured) {
+                const res = await fetch(`/api/admin/featured/${portfolioId}`, {
+                    method: "DELETE",
+                });
+                if (!res.ok) throw new Error("操作失败");
+                setSuccess("已从精选中移除");
+            } else {
+                const res = await fetch("/api/admin/featured", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ portfolioId }),
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || "操作失败");
+                }
+                setSuccess("已添加到精选");
+            }
+            fetchFeatured();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "操作失败");
         }
     };
 
@@ -363,6 +402,7 @@ export default function AdminManagePortfoliosPage() {
                                     <th>作者</th>
                                     <th>状态</th>
                                     <th>公开</th>
+                                    <th>精选</th>
                                     <th>浏览量</th>
                                     <th>创建时间</th>
                                     <th>操作</th>
@@ -399,14 +439,29 @@ export default function AdminManagePortfoliosPage() {
                                                 </div>
                                                 <div className={styles.portfolioInfo}>
                                                     {editingId === portfolio.id ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editForm.title}
-                                                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                                                            className={styles.inlineInput}
-                                                        />
+                                                        <div className={styles.editFields}>
+                                                            <input
+                                                                type="text"
+                                                                value={editForm.title}
+                                                                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                                                                className={styles.inlineInput}
+                                                                placeholder="作品标题"
+                                                            />
+                                                            <textarea
+                                                                value={editForm.description}
+                                                                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                                                className={styles.inlineTextarea}
+                                                                placeholder="作品说明（可选）"
+                                                                rows={2}
+                                                            />
+                                                        </div>
                                                     ) : (
-                                                        <span className={styles.portfolioTitle}>{portfolio.title}</span>
+                                                        <>
+                                                            <span className={styles.portfolioTitle}>{portfolio.title}</span>
+                                                            {portfolio.description && (
+                                                                <span className={styles.portfolioDesc}>{portfolio.description}</span>
+                                                            )}
+                                                        </>
                                                     )}
                                                     <span className={styles.itemCount}>{portfolio.itemCount} 项作品</span>
                                                 </div>
@@ -461,6 +516,18 @@ export default function AdminManagePortfoliosPage() {
                                                         <line x1="1" y1="1" x2="23" y2="23" />
                                                     </svg>
                                                 )}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <button
+                                                className={`${styles.toggleBtn} ${featuredIds.includes(portfolio.id) ? styles.featured : ""}`}
+                                                onClick={() => toggleFeatured(portfolio.id)}
+                                                title={featuredIds.includes(portfolio.id) ? "取消精选" : "设为精选"}
+                                                disabled={portfolio.status !== "APPROVED"}
+                                            >
+                                                <svg viewBox="0 0 24 24" fill={featuredIds.includes(portfolio.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                </svg>
                                             </button>
                                         </td>
                                         <td>

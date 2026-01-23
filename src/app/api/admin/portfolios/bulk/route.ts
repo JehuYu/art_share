@@ -79,7 +79,33 @@ export async function DELETE(request: Request) {
             );
         }
 
-        // Delete portfolio items first
+        // 获取所有要删除的作品的文件路径
+        const portfolioItems = await prisma.portfolioItem.findMany({
+            where: { portfolioId: { in: ids } },
+            select: { url: true, thumbnail: true },
+        });
+
+        // 导入文件清理工具
+        const { deleteFileWithThumbnails } = await import("@/lib/image-utils");
+
+        // 清理物理文件（异步执行，不阻塞响应）
+        const fileCleanupPromises = portfolioItems.map(async (item) => {
+            try {
+                await deleteFileWithThumbnails(item.url);
+            } catch (err) {
+                console.warn(`Failed to delete file ${item.url}:`, err);
+            }
+        });
+        Promise.allSettled(fileCleanupPromises).catch(console.error);
+
+        // Delete from featured first
+        await prisma.featuredPortfolio.deleteMany({
+            where: {
+                portfolioId: { in: ids },
+            },
+        });
+
+        // Delete portfolio items
         await prisma.portfolioItem.deleteMany({
             where: {
                 portfolioId: { in: ids },

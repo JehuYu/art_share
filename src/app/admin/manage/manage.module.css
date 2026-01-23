@@ -331,6 +331,35 @@
     max-width: 200px;
 }
 
+.editFields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.inlineTextarea {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    width: 100%;
+    max-width: 200px;
+    resize: vertical;
+    min-height: 40px;
+    font-family: inherit;
+}
+
+.portfolioDesc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
 /* Author Cell */
 .authorCell {
     display: flex;
@@ -435,6 +464,17 @@
 .toggleBtn svg {
     width: 16px;
     height: 16px;
+}
+
+.toggleBtn.featured {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #f59e0b;
+}
+
+.toggleBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 /* View Count */
