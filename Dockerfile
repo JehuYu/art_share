@@ -1,14 +1,16 @@
 # ============================================
 # Art Share - Multi-stage Docker Build
 # ============================================
+# Using Debian-slim for better sharp compatibility
 
-# Base image with common dependencies
-FROM node:20-alpine AS base
+# Base image
+FROM node:20-slim AS base
 
-# Install dependencies needed for runtime
-# - openssl: required for Prisma
-# - libc6-compat: for some native modules
-RUN apk add --no-cache libc6-compat openssl
+# Install common dependencies
+RUN apt-get update && apt-get install -y \
+    openssl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # ============================================
 # Stage 1: Install dependencies
@@ -16,29 +18,17 @@ RUN apk add --no-cache libc6-compat openssl
 FROM base AS deps
 WORKDIR /app
 
-# Install build dependencies for native modules (sharp)
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    vips-dev
-
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install all dependencies
-# Use --ignore-scripts first, then rebuild sharp with proper flags
-RUN npm ci --ignore-scripts
-RUN npm rebuild sharp
+# Install dependencies
+RUN npm ci
 
 # ============================================
 # Stage 2: Build the application
 # ============================================
 FROM base AS builder
 WORKDIR /app
-
-# Install vips for sharp runtime
-RUN apk add --no-cache vips-dev
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -47,7 +37,6 @@ COPY . .
 # Environment variables for build time
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-# Use a template DB file for build-time initialization
 ENV DATABASE_URL="file:/app/template.db"
 
 # Generate Prisma Client
@@ -56,7 +45,7 @@ RUN npx prisma generate
 # Initialize DB structure
 RUN npx prisma db push
 
-# Seed initial data (create admin user)
+# Seed initial data
 RUN npx tsx prisma/seed.ts
 
 # Build Next.js application
@@ -67,9 +56,6 @@ RUN npm run build
 # ============================================
 FROM base AS runner
 WORKDIR /app
-
-# Install vips for sharp runtime (minimal install)
-RUN apk add --no-cache vips
 
 # Set production environment
 ENV NODE_ENV=production
@@ -82,11 +68,9 @@ RUN adduser --system --uid 1001 nextjs
 # Copy public assets
 COPY --from=builder /app/public ./public
 
-# Create necessary directories with proper permissions
-RUN mkdir -p .next
-RUN mkdir -p public/uploads
-RUN chown -R nextjs:nodejs .next
-RUN chown -R nextjs:nodejs public/uploads
+# Create necessary directories
+RUN mkdir -p .next public/uploads
+RUN chown -R nextjs:nodejs .next public/uploads
 
 # Copy standalone build output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -99,7 +83,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/template.db ./template.db
 # Expose port
 EXPOSE 3000
 
-# Set runtime environment variables
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
@@ -110,8 +93,5 @@ USER nextjs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Startup script:
-# 1. Check if volume-mounted DB exists (prisma/dev.db)
-# 2. If not, copy pre-built template.db
-# 3. Start the server
+# Startup script
 CMD ["/bin/sh", "-c", "if [ ! -f prisma/dev.db ]; then echo 'Initializing fresh database...'; cp template.db prisma/dev.db; fi && node server.js"]
