@@ -4,11 +4,11 @@
 
 # Base image with common dependencies
 FROM node:20-alpine AS base
-# Install dependencies needed for both build and runtime
+
+# Install dependencies needed for runtime
 # - openssl: required for Prisma
 # - libc6-compat: for some native modules
-# - vips: for sharp image processing
-RUN apk add --no-cache libc6-compat openssl vips vips-dev
+RUN apk add --no-cache libc6-compat openssl
 
 # ============================================
 # Stage 1: Install dependencies
@@ -16,17 +16,29 @@ RUN apk add --no-cache libc6-compat openssl vips vips-dev
 FROM base AS deps
 WORKDIR /app
 
+# Install build dependencies for native modules (sharp)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    vips-dev
+
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm ci
+# Install all dependencies
+# Use --ignore-scripts first, then rebuild sharp with proper flags
+RUN npm ci --ignore-scripts
+RUN npm rebuild sharp
 
 # ============================================
 # Stage 2: Build the application
 # ============================================
 FROM base AS builder
 WORKDIR /app
+
+# Install vips for sharp runtime
+RUN apk add --no-cache vips-dev
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -55,6 +67,9 @@ RUN npm run build
 # ============================================
 FROM base AS runner
 WORKDIR /app
+
+# Install vips for sharp runtime (minimal install)
+RUN apk add --no-cache vips
 
 # Set production environment
 ENV NODE_ENV=production
