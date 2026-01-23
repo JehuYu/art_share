@@ -30,11 +30,23 @@ export default function ExplorePage() {
         fetchSettings();
     }, []);
 
+    // Fisher-Yates shuffle algorithm for random ordering
+    const shuffleArray = <T,>(array: T[]): T[] => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
+
     const fetchPortfolios = async () => {
         try {
             const res = await fetch("/api/portfolios?limit=50");
             const data = await res.json();
-            setPortfolios(data.portfolios || []);
+            // Randomly shuffle the portfolios
+            const shuffledPortfolios = shuffleArray<Portfolio>(data.portfolios || []);
+            setPortfolios(shuffledPortfolios);
         } catch (error) {
             console.error("Failed to fetch portfolios:", error);
         } finally {

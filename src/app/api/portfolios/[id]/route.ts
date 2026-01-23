@@ -109,6 +109,23 @@ export async function PATCH(
         if (description !== undefined) updateData.description = description;
         if (cover !== undefined) updateData.cover = cover;
         if (isPublic !== undefined && portfolio.status === "APPROVED") {
+            // Check if trying to make private and if portfolio is used in carousel
+            if (isPublic === false) {
+                const portfolioUrl = `/portfolio/${id}`;
+                const linkedAlbum = await prisma.album.findFirst({
+                    where: {
+                        link: portfolioUrl,
+                        isActive: true,
+                    },
+                });
+
+                if (linkedAlbum) {
+                    return NextResponse.json(
+                        { error: "无法设为私密：该作品已被设为首页轮播展示，请先联系管理员移除轮播图" },
+                        { status: 400 }
+                    );
+                }
+            }
             updateData.isPublic = isPublic;
         }
 

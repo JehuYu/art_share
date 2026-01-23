@@ -6,12 +6,13 @@
 
 /* Hero / Carousel */
 .hero {
-    margin-bottom: var(--spacing-3xl);
+    margin-bottom: 0;
+    padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-sm);
 }
 
 /* Featured Section */
 .featured {
-    padding: var(--spacing-2xl) 0;
+    padding: var(--spacing-lg) 0 var(--spacing-2xl);
 }
 
 .sectionHeader {

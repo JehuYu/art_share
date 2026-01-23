@@ -71,12 +71,20 @@ export default function Carousel({ albums, autoPlayInterval = 5000 }: CarouselPr
                     >
                         <div className={styles.imageWrapper}>
                             {album.cover && album.cover.trim() !== "" ? (
-                                <img
-                                    src={album.cover}
-                                    alt={album.title}
-                                    className={styles.carouselImage}
-                                    loading={index === 0 ? "eager" : "lazy"}
-                                />
+                                <>
+                                    {/* Blurred background for frosted glass effect */}
+                                    <div
+                                        className={styles.blurredBg}
+                                        style={{ backgroundImage: `url(${album.cover})` }}
+                                    />
+                                    {/* Main image - fully visible */}
+                                    <img
+                                        src={album.cover}
+                                        alt={album.title}
+                                        className={styles.carouselImage}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                    />
+                                </>
                             ) : (
                                 <div className={styles.placeholderBg} />
                             )}

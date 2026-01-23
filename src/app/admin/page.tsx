@@ -57,6 +57,15 @@ export default async function AdminPage() {
                                 <span className={styles.badge}>{pendingCount}</span>
                             )}
                         </Link>
+                        <Link href="/admin/manage" className={styles.navItem}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                                <rect x="9" y="3" width="6" height="4" rx="1" />
+                                <path d="M9 12h6" />
+                                <path d="M9 16h6" />
+                            </svg>
+                            作品集管理
+                        </Link>
                         <Link href="/admin/albums" className={styles.navItem}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="2" y="6" width="20" height="12" rx="2" />
@@ -164,6 +173,15 @@ export default async function AdminPage() {
                                     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                                 </svg>
                                 <span>审核作品</span>
+                            </Link>
+                            <Link href="/admin/manage" className={styles.actionCard}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                                    <rect x="9" y="3" width="6" height="4" rx="1" />
+                                    <path d="M9 12h6" />
+                                    <path d="M9 16h6" />
+                                </svg>
+                                <span>管理作品集</span>
                             </Link>
                             <Link href="/admin/albums" className={styles.actionCard}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
