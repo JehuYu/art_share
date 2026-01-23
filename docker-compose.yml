@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  art-share:
+    build: .
+    container_name: art-share
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - AUTH_SECRET=${AUTH_SECRET:-art-share-secret-2026}
+    volumes:
+      # 数据持久化
+      - ./data:/app/prisma
+      - ./uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
