@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import path from "path";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-utils";
+import { CacheKeys } from "@/lib/redis";
 
 // Helper to generate unique filename
 function generateFilename(originalName: string): string {
@@ -143,15 +144,31 @@ export async function GET(request: Request) {
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "20");
         const status = searchParams.get("status");
+        const isMine = searchParams.get("mine") === "true";
 
         const user = await getAuthUser();
+
+        // 缓存处理：仅缓存公共页面的查询（非 "我的"、非特定状态或者是已通过的）
+        // 只有当查询公共可见作品时才使用缓存
+        const isPublicQuery = !user || (!isMine && (status === "APPROVED" || !status));
+        const cacheKey = CacheKeys.PORTFOLIOS_PUBLIC(page, limit);
+
+        // 动态导入 cache 避免循环依赖问题
+        const { cache } = await import("@/lib/redis");
+
+        if (isPublicQuery) {
+            const cachedData = await cache.get(cacheKey);
+            if (cachedData) {
+                return NextResponse.json(cachedData);
+            }
+        }
 
         // Build where clause
         const where: Record<string, unknown> = {};
 
         if (user) {
             // User can see their own portfolios
-            if (searchParams.get("mine") === "true") {
+            if (isMine) {
                 where.userId = user.id;
                 if (status) {
                     where.status = status;
@@ -189,7 +206,7 @@ export async function GET(request: Request) {
             prisma.portfolio.count({ where }),
         ]);
 
-        return NextResponse.json({
+        const result = {
             portfolios: portfolios.map((p) => ({
                 ...p,
                 itemCount: p._count.items,
@@ -200,7 +217,14 @@ export async function GET(request: Request) {
                 total,
                 totalPages: Math.ceil(total / limit),
             },
-        });
+        };
+
+        // 如果是公共查询，写入缓存（过期时间 60 秒）
+        if (isPublicQuery) {
+            await cache.set(cacheKey, result, 60);
+        }
+
+        return NextResponse.json(result);
     } catch (error) {
         console.error("List portfolios error:", error);
         return NextResponse.json(

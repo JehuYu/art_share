@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/Header";
+import I18nProvider from "@/components/providers/I18nProvider";
 
 export const metadata: Metadata = {
   title: "Art Share - 夏令营作品展示平台",
@@ -16,9 +17,12 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <Header />
-        <main>{children}</main>
+        <I18nProvider>
+          <Header />
+          <main>{children}</main>
+        </I18nProvider>
       </body>
     </html>
   );
 }
+

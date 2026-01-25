@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import styles from "./Header.module.css";
 
 export default function Header() {
@@ -10,6 +12,7 @@ export default function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [user, setUser] = useState<{ name: string; role: string } | null>(null);
     const pathname = usePathname();
+    const tNav = useTranslations("nav");
 
     useEffect(() => {
         const handleScroll = () => {
@@ -59,18 +62,20 @@ export default function Header() {
                         href="/"
                         className={`${styles.navLink} ${isActive("/") ? styles.active : ""}`}
                     >
-                        首页
+                        {tNav("home")}
                     </Link>
                     <Link
                         href="/explore"
                         className={`${styles.navLink} ${isActive("/explore") ? styles.active : ""}`}
                     >
-                        探索
+                        {tNav("explore")}
                     </Link>
                 </nav>
 
                 {/* Auth Buttons / User Menu */}
                 <div className={styles.actions}>
+                    <LanguageSwitcher />
+
                     {user ? (
                         <div className={styles.userMenu}>
                             <Link href="/dashboard" className={styles.userButton}>
@@ -81,17 +86,17 @@ export default function Header() {
                             </Link>
                             {user.role === "ADMIN" && (
                                 <Link href="/admin" className={`btn btn-ghost btn-sm ${styles.adminLink}`}>
-                                    管理后台
+                                    {tNav("admin")}
                                 </Link>
                             )}
                         </div>
                     ) : (
                         <div className={styles.authButtons}>
                             <Link href="/login" className="btn btn-ghost">
-                                登录
+                                {tNav("login")}
                             </Link>
                             <Link href="/register" className="btn btn-primary">
-                                注册
+                                {tNav("register")}
                             </Link>
                         </div>
                     )}
@@ -112,29 +117,29 @@ export default function Header() {
                 <div className={styles.mobileMenu}>
                     <nav className={styles.mobileNav}>
                         <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                            首页
+                            {tNav("home")}
                         </Link>
                         <Link href="/explore" onClick={() => setIsMobileMenuOpen(false)}>
-                            探索
+                            {tNav("explore")}
                         </Link>
                         {user ? (
                             <>
                                 <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                                    个人中心
+                                    {tNav("dashboard")}
                                 </Link>
                                 {user.role === "ADMIN" && (
                                     <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                                        管理后台
+                                        {tNav("admin")}
                                     </Link>
                                 )}
                             </>
                         ) : (
                             <>
                                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                                    登录
+                                    {tNav("login")}
                                 </Link>
                                 <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                                    注册
+                                    {tNav("register")}
                                 </Link>
                             </>
                         )}

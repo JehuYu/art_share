@@ -27,8 +27,13 @@ export default function AdminPortfoliosPage() {
     const [success, setSuccess] = useState("");
     const [error, setError] = useState("");
 
+    // 批量操作状态
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [batchLoading, setBatchLoading] = useState(false);
+
     useEffect(() => {
         fetchPortfolios();
+        setSelectedIds(new Set()); // 切换过滤器时重置选择
     }, [filter]);
 
     const fetchPortfolios = async () => {
@@ -44,6 +49,7 @@ export default function AdminPortfoliosPage() {
         }
     };
 
+    // 单个操作
     const handleAction = async (id: string, status: string) => {
         try {
             const res = await fetch(`/api/admin/portfolios/${id}`, {
@@ -64,6 +70,7 @@ export default function AdminPortfoliosPage() {
         }
     };
 
+    // 单个删除
     const handleDelete = async (id: string) => {
         if (!confirm("确定要删除此作品吗？")) return;
 
@@ -81,6 +88,74 @@ export default function AdminPortfoliosPage() {
             fetchPortfolios();
         } catch (err) {
             setError(err instanceof Error ? err.message : "删除失败");
+        }
+    };
+
+    // 选择/取消选择
+    const toggleSelection = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    // 全选/取消全选
+    const toggleSelectAll = () => {
+        if (selectedIds.size === portfolios.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(portfolios.map(p => p.id)));
+        }
+    };
+
+    // 批量操作
+    const handleBatchAction = async (action: "approve" | "reject" | "delete") => {
+        if (selectedIds.size === 0) return;
+
+        const actionName = {
+            approve: "通过",
+            reject: "拒绝",
+            delete: "删除"
+        }[action];
+
+        if (!confirm(`确定要批量${actionName}选中的 ${selectedIds.size} 个作品吗？${action === 'delete' ? '此操作不可恢复。' : ''}`)) {
+            return;
+        }
+
+        try {
+            setBatchLoading(true);
+            const res = await fetch("/api/admin/portfolios/batch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action,
+                    ids: Array.from(selectedIds)
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "批量操作失败");
+            }
+
+            // 处理结果显示
+            if (data.errors && data.errors.length > 0) {
+                setError(`部分操作失败:\n${data.errors.join("\n")}`);
+            } else {
+                setSuccess(data.message);
+            }
+
+            // 重置选区并刷新
+            setSelectedIds(new Set());
+            fetchPortfolios();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "批量操作失败");
+        } finally {
+            setBatchLoading(false);
         }
     };
 
@@ -118,9 +193,53 @@ export default function AdminPortfoliosPage() {
                     </div>
                 </div>
 
+                {/* Batch Action Bar */}
+                {portfolios.length > 0 && (
+                    <div className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="checkbox"
+                                    checked={portfolios.length > 0 && selectedIds.size === portfolios.length}
+                                    onChange={toggleSelectAll}
+                                />
+                                <span className="text-sm">全选 ({selectedIds.size}/{portfolios.length})</span>
+                            </label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handleBatchAction("approve")}
+                                disabled={selectedIds.size === 0 || batchLoading}
+                                className="btn btn-sm btn-success"
+                                title="批量通过"
+                            >
+                                通过
+                            </button>
+                            <button
+                                onClick={() => handleBatchAction("reject")}
+                                disabled={selectedIds.size === 0 || batchLoading}
+                                className="btn btn-sm btn-warning"
+                                title="批量拒绝"
+                            >
+                                拒绝
+                            </button>
+                            <button
+                                onClick={() => handleBatchAction("delete")}
+                                disabled={selectedIds.size === 0 || batchLoading}
+                                className="btn btn-sm btn-error"
+                                title="批量删除"
+                            >
+                                删除
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Messages */}
                 {error && (
-                    <div className={styles.error}>
+                    <div className={styles.error} style={{ whiteSpace: 'pre-line' }}>
                         {error}
                         <button onClick={() => setError("")}>×</button>
                     </div>
@@ -134,9 +253,10 @@ export default function AdminPortfoliosPage() {
                 )}
 
                 {/* Portfolio List */}
-                {loading ? (
+                {loading || batchLoading ? (
                     <div className={styles.loading}>
                         <div className="loading-spinner"></div>
+                        {batchLoading && <p className="mt-2 text-gray-500">正在处理批量操作...</p>}
                     </div>
                 ) : portfolios.length === 0 ? (
                     <div className={styles.empty}>
@@ -150,8 +270,22 @@ export default function AdminPortfoliosPage() {
                 ) : (
                     <div className={styles.grid}>
                         {portfolios.map((portfolio) => (
-                            <div key={portfolio.id} className={styles.card}>
+                            <div
+                                key={portfolio.id}
+                                className={`${styles.card} ${selectedIds.has(portfolio.id) ? 'ring-2 ring-primary' : ''}`}
+                            >
                                 <div className={styles.cardCover}>
+                                    {/* Selection Checkbox Overlay */}
+                                    <div className="absolute top-2 left-2 z-10">
+                                        <input
+                                            type="checkbox"
+                                            className="checkbox checkbox-lg bg-white/80 backdrop-blur-sm"
+                                            checked={selectedIds.has(portfolio.id)}
+                                            onChange={() => toggleSelection(portfolio.id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+
                                     {portfolio.cover ? (
                                         <Image
                                             src={portfolio.cover}
@@ -189,7 +323,12 @@ export default function AdminPortfoliosPage() {
                                 </div>
 
                                 <div className={styles.cardBody}>
-                                    <h3 className={styles.cardTitle}>{portfolio.title}</h3>
+                                    <h3
+                                        className={`${styles.cardTitle} cursor-pointer hover:text-primary`}
+                                        onClick={() => toggleSelection(portfolio.id)}
+                                    >
+                                        {portfolio.title}
+                                    </h3>
                                     <div className={styles.cardMeta}>
                                         <span>{portfolio.user.name}</span>
                                         <span>·</span>
